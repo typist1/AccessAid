@@ -13,6 +13,7 @@ import ApplicationForm from './pages/programs/ApplicationForm'
 import Documents from './pages/documents'
 import Settings from './pages/settings'
 import AutofillProfile from './pages/autofill-profile'
+import AbeAutofillPage from './pages/programs/AbeAutofillPage'
 
 export const router = createBrowserRouter([
   { path: '/', element: <Landing /> },
@@ -35,6 +36,10 @@ export const router = createBrowserRouter([
   {
     path: '/programs/:id',
     element: <AuthGuard><OnboardingGuard><ProgramDetail /></OnboardingGuard></AuthGuard>,
+  },
+  {
+    path: '/programs/snap/apply',
+    element: <AuthGuard><OnboardingGuard><AbeAutofillPage /></OnboardingGuard></AuthGuard>,
   },
   {
     path: '/programs/:id/apply',

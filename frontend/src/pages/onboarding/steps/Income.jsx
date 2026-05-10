@@ -1,38 +1,52 @@
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import Button from '../../../components/ui/Button'
+import Input from '../../../components/ui/Input'
+
+function toBucket(monthly) {
+  const annual = monthly * 12
+  if (annual < 15000) return '<15k'
+  if (annual < 30000) return '15-30k'
+  if (annual < 50000) return '30-50k'
+  return '50k+'
+}
 
 export default function Income({ value, onNext, onBack }) {
-  const { t } = useTranslation()
-  const [income, setIncome] = useState(value.income ?? '')
+  const [monthly, setMonthly] = useState(value.monthly_income_current ?? '')
 
-  const OPTIONS = [
-    { value: '<15k', label: t('onboarding.income_under15k') },
-    { value: '15-30k', label: t('onboarding.income_15_30k') },
-    { value: '30-50k', label: t('onboarding.income_30_50k') },
-    { value: '50k+', label: t('onboarding.income_50kplus') },
-  ]
+  function handleNext() {
+    const amount = parseFloat(monthly) || 0
+    onNext({
+      monthly_income_current: String(amount),
+      income: toBucket(amount),
+    })
+  }
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">{t('onboarding.income_title')}</h2>
-        <p className="text-gray-500 mt-1">{t('onboarding.income_subtitle')}</p>
+        <h2 className="text-2xl font-bold text-gray-900">What's your current monthly income?</h2>
+        <p className="text-gray-500 mt-1">Before taxes, all sources. Enter 0 if currently unemployed.</p>
       </div>
-      <div className="flex flex-col gap-2">
-        {OPTIONS.map(opt => (
-          <button
-            key={opt.value}
-            onClick={() => setIncome(opt.value)}
-            className={`text-left px-4 py-3 rounded-lg border-2 transition-colors ${income === opt.value ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 hover:border-gray-300'}`}
-          >
-            {opt.label}
-          </button>
-        ))}
+      <div className="relative">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">$</span>
+        <input
+          type="number"
+          min="0"
+          value={monthly}
+          onChange={e => setMonthly(e.target.value)}
+          placeholder="0"
+          autoFocus
+          className="w-full pl-7 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none text-lg"
+        />
       </div>
+      {monthly !== '' && (
+        <p className="text-sm text-gray-500">
+          Annual estimate: <span className="font-semibold text-gray-700">${(parseFloat(monthly) * 12).toLocaleString()}</span>
+        </p>
+      )}
       <div className="flex gap-3 justify-end">
-        {onBack && <Button variant="ghost" onClick={onBack}>{t('common.back')}</Button>}
-        <Button onClick={() => onNext({ income })} disabled={!income}>{t('common.continue')}</Button>
+        {onBack && <Button variant="ghost" onClick={onBack}>Back</Button>}
+        <Button onClick={handleNext} disabled={monthly === ''}>Continue</Button>
       </div>
     </div>
   )
