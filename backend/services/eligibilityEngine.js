@@ -1,4 +1,4 @@
-import { chat } from './qwen.js'
+import { chat } from './claude.js'
 
 const INCOME_MAP = {
   '<15k': 7500,
@@ -152,7 +152,7 @@ export async function scoreEligibility(userProfile, program) {
           role: 'user',
           content: `Profile: ${JSON.stringify(userProfile)}. Program: ${program.name}. Matched rules: ${reasons.join(', ')}. Missing: ${missing.join(', ')}.`,
         },
-      ], 'qwen-turbo')
+      ])
     } catch {
       notes = `You may qualify for ${program.name} based on your profile.`
     }

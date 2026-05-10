@@ -5,25 +5,25 @@ import { extractFacts } from '../services/factExtractor.js'
 
 const router = Router()
 
+// Accepts either { ocrText } (legacy) or { fileBase64, mimeType } (Claude vision)
 router.post('/facts', requireAuth, async (req, res, next) => {
   try {
     const userId = req.user.id
-    const { ocrText, documentType, documentId } = req.body
+    const { ocrText, fileBase64, mimeType, documentType, documentId } = req.body
 
-    if (!ocrText || !documentType) {
-      return res.status(400).json({ error: 'ocrText and documentType required' })
-    }
+    if (!documentType) return res.status(400).json({ error: 'documentType required' })
+    if (!ocrText && !fileBase64) return res.status(400).json({ error: 'ocrText or fileBase64 required' })
 
-    const facts = await extractFacts(ocrText, documentType)
+    const input = fileBase64 ? { fileBase64, mimeType: mimeType || 'image/jpeg' } : ocrText
+    const facts = await extractFacts(input, documentType)
 
-    // Update document extraction status
-    await supabaseAdmin.from('documents')
-      .update({
+    if (documentId) {
+      await supabaseAdmin.from('documents').update({
         extraction_status: 'completed',
-        extracted_text: ocrText,
+        ...(ocrText && { extracted_text: ocrText }),
         fields_extracted: Object.keys(facts).length,
-      })
-      .eq('id', documentId)
+      }).eq('id', documentId)
+    }
 
     res.json({ facts })
   } catch (err) {
@@ -31,7 +31,6 @@ router.post('/facts', requireAuth, async (req, res, next) => {
   }
 })
 
-// Called after user confirms facts on ExtractionReview screen
 router.post('/confirm', requireAuth, async (req, res, next) => {
   try {
     const userId = req.user.id
@@ -45,7 +44,6 @@ router.post('/confirm', requireAuth, async (req, res, next) => {
     }))
 
     await supabaseAdmin.from('user_facts').upsert(upserts, { onConflict: 'user_id,field_key' })
-
     res.json({ saved: upserts.length })
   } catch (err) {
     next(err)

@@ -1,4 +1,4 @@
-import { chat } from './qwen.js'
+import { chat, extractFromFile } from './claude.js'
 
 const SCHEMAS = {
   drivers_license: ['full_name', 'date_of_birth', 'address', 'state', 'license_number', 'expiration_date'],
@@ -12,29 +12,39 @@ const SCHEMAS = {
   benefit_letter: ['program_name', 'benefit_amount', 'effective_date', 'case_number'],
 }
 
-export async function extractFacts(ocrText, documentType) {
+function sanitize(parsed) {
+  // Never store full SSN — keep only last 4
+  if (parsed.ssn) {
+    parsed.ssn_last4 = String(parsed.ssn).slice(-4)
+    delete parsed.ssn
+  }
+  return Object.fromEntries(Object.entries(parsed).filter(([, v]) => v !== null && v !== ''))
+}
+
+// input: string (OCR text) OR { fileBase64, mimeType } (image/PDF)
+export async function extractFacts(input, documentType) {
   const fields = SCHEMAS[documentType] ?? Object.values(SCHEMAS).flat()
   const template = Object.fromEntries(fields.map(f => [f, null]))
+  const schemaStr = JSON.stringify(Object.keys(template))
 
-  const response = await chat([
-    {
-      role: 'system',
-      content: `Extract structured data from documents. Return ONLY valid JSON with these exact keys: ${JSON.stringify(Object.keys(template))}. Use null for missing fields. No markdown, no explanation.`,
-    },
-    {
-      role: 'user',
-      content: `Document type: ${documentType}\n\nDocument text:\n${ocrText}`,
-    },
-  ])
+  let response
+
+  if (typeof input === 'object' && input.fileBase64) {
+    const prompt = `Document type: ${documentType}. Extract these fields: ${schemaStr}. Return ONLY valid JSON with those exact keys. Use null for missing fields. No markdown, no explanation.`
+    response = await extractFromFile(input.fileBase64, input.mimeType, prompt)
+  } else {
+    response = await chat([
+      {
+        role: 'system',
+        content: `Extract structured data from documents. Return ONLY valid JSON with these exact keys: ${schemaStr}. Use null for missing fields. No markdown, no explanation.`,
+      },
+      { role: 'user', content: `Document type: ${documentType}\n\nDocument text:\n${input}` },
+    ])
+  }
 
   try {
     const parsed = JSON.parse(response.replace(/```json\n?|\n?```/g, '').trim())
-    // Never store full SSN — keep only last 4
-    if (parsed.ssn) {
-      parsed.ssn_last4 = String(parsed.ssn).slice(-4)
-      delete parsed.ssn
-    }
-    return Object.fromEntries(Object.entries(parsed).filter(([, v]) => v !== null))
+    return sanitize(parsed)
   } catch {
     return {}
   }

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AccessAid</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      width: 320px;
+      background: #f9fafb;
+      color: #111827;
+      font-size: 14px;
+      min-height: 380px;
+    }
+
+    .header {
+      background: #fff;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header-logo { font-size: 18px; color: #2563eb; }
+    .header-title { font-weight: 700; font-size: 15px; }
+    .header-version { margin-left: auto; font-size: 11px; color: #9ca3af; }
+
+    .content { padding: 16px; }
+
+    /* ── Login form ── */
+    .login-intro { color: #4b5563; font-size: 13px; margin-bottom: 16px; line-height: 1.5; }
+
+    label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px; }
+
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #111827;
+      background: #fff;
+      outline: none;
+      transition: border-color 0.15s;
+      margin-bottom: 12px;
+    }
+    input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-ghost { background: #f3f4f6; color: #374151; margin-top: 8px; font-weight: 500; }
+    .btn-ghost:hover { background: #e5e7eb; }
+
+    .error-msg { color: #dc2626; font-size: 12px; margin-bottom: 10px; }
+
+    /* ── Logged-in state ── */
+    .user-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+    .user-name { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
+    .user-email { font-size: 12px; color: #6b7280; }
+
+    .tip {
+      background: #eff6ff;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 12px;
+      color: #1e40af;
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+    .tip strong { display: block; margin-bottom: 4px; }
+
+    .logout-btn { background: none; border: none; font-size: 12px; color: #6b7280; cursor: pointer; text-decoration: underline; display: block; margin: 0 auto; }
+    .logout-btn:hover { color: #374151; }
+
+    /* ── Spinner ── */
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="header-logo">✦</span>
+    <span class="header-title">AccessAid</span>
+    <span class="header-version">v0.1</span>
+  </div>
+
+  <div class="content" id="root">
+    <!-- rendered by popup.js -->
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

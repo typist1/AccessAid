@@ -1,8 +1,7 @@
 import { Router } from 'express'
 import { requireAuth } from '../middleware/auth.js'
 import supabaseAdmin from '../lib/supabaseAdmin.js'
-import { chat } from '../services/qwen.js'
-import { getRelevantChunks } from '../services/ragService.js'
+import { chat } from '../services/claude.js'
 
 const router = Router()
 
@@ -13,18 +12,27 @@ router.post('/message', requireAuth, async (req, res, next) => {
     const userId = req.user.id
     const { message, history = [], programContext = null } = req.body
 
-    const { data: profile } = await supabaseAdmin
-      .from('user_profile')
-      .select('full_name, state, income, household_size, employment_status, has_children')
-      .eq('user_id', userId)
-      .single()
+    const [{ data: profile }, { data: programs }] = await Promise.all([
+      supabaseAdmin
+        .from('user_profile')
+        .select('full_name, state, income, household_size, employment_status, has_children')
+        .eq('user_id', userId)
+        .single(),
+      supabaseAdmin
+        .from('programs')
+        .select('name, category, description_en, eligibility_rules'),
+    ])
 
-    const ragContext = await getRelevantChunks(message)
+    // Include all programs inline — corpus is small enough to fit in context
+    const programSummary = (programs ?? [])
+      .map(p => `${p.name} (${p.category}): ${p.description_en}`)
+      .join('\n')
 
     const systemPrompt = `You are a compassionate benefits navigator helping a user find and apply for government assistance programs.
+
 Always:
 - Speak plainly and simply
-- Say "you may qualify" never "you qualify"
+- Say "you may qualify" — never "you qualify"
 - Never give legal or financial advice
 - If unsure, say so
 
@@ -35,10 +43,10 @@ User profile:
 - Household size: ${profile?.household_size || 'Unknown'}
 - Employment: ${profile?.employment_status || 'Unknown'}
 - Has children: ${profile?.has_children ? 'Yes' : 'No'}
-${programContext ? `\nCurrent program context: ${programContext}` : ''}
+${programContext ? `\nCurrent program context:\n${programContext}` : ''}
 
-Relevant program information:
-${ragContext}`
+Available programs:
+${programSummary}`
 
     const messages = [
       { role: 'system', content: systemPrompt },
@@ -46,7 +54,7 @@ ${ragContext}`
       { role: 'user', content: message },
     ]
 
-    const response = await chat(messages, 'qwen-turbo')
+    const response = await chat(messages)
 
     // Background: detect new facts from user message
     detectAndSaveFacts(userId, message).catch(console.error)
@@ -62,10 +70,10 @@ async function detectAndSaveFacts(userId, userMessage) {
     const result = await chat([
       {
         role: 'system',
-        content: 'Extract any personal facts the user revealed. Return ONLY JSON like {"field_key": "value"} or {} if nothing found. No explanation.',
+        content: 'Extract any personal facts the user revealed about themselves. Return ONLY JSON like {"field_key": "value"} or {} if nothing found. No explanation.',
       },
       { role: 'user', content: userMessage },
-    ], 'qwen-turbo')
+    ])
 
     const facts = JSON.parse(result.replace(/```json\n?|\n?```/g, '').trim())
     if (!facts || !Object.keys(facts).length) return

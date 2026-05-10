@@ -9,6 +9,7 @@ import embedRoutes from './routes/embed.js'
 import programsRoutes from './routes/programs.js'
 import accountRoutes from './routes/account.js'
 import profileRoutes from './routes/profile.js'
+import extensionRoutes from './routes/extension.js'
 import { cleanupExpiredDocuments } from './services/cleanup.js'
 
 const app = express()
@@ -23,6 +24,7 @@ app.use('/api/embed', embedRoutes)
 app.use('/api/programs', programsRoutes)
 app.use('/api/account', accountRoutes)
 app.use('/api/profile', profileRoutes)
+app.use('/api/extension', extensionRoutes)
 
 app.use(errorHandler)
 
