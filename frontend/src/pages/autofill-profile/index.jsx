@@ -1,0 +1,282 @@
+import { useState } from 'react'
+import { useUserContext } from '../../context/UserContext'
+import Sidebar from '../../components/layout/Sidebar'
+
+const US_STATES = [
+  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
+  'KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
+  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT',
+  'VA','WA','WV','WI','WY','DC',
+]
+
+// Fields the extension uses on healthcare.gov screener
+const HEALTHCARE_GOV_KEYS = new Set([
+  'state', 'zip_code', 'household_size', 'age', 'date_of_birth',
+  'annual_income_last_year', 'first_name', 'last_name', 'email', 'phone_number',
+])
+
+const AUTOFILL_SECTIONS = [
+  {
+    title: 'Personal',
+    fields: [
+      { key: 'full_name', label: 'Full Name', type: 'text' },
+      { key: 'first_name', label: 'First Name', type: 'text' },
+      { key: 'last_name', label: 'Last Name', type: 'text' },
+      { key: 'date_of_birth', label: 'Date of Birth', type: 'date' },
+      { key: 'age', label: 'Age', type: 'number' },
+    ],
+  },
+  {
+    title: 'Contact',
+    fields: [
+      { key: 'email', label: 'Email', type: 'email' },
+      { key: 'phone_number', label: 'Phone Number', type: 'tel' },
+      { key: 'address_line_1', label: 'Street Address', type: 'text' },
+      { key: 'city', label: 'City', type: 'text' },
+      {
+        key: 'state', label: 'State', type: 'select',
+        options: US_STATES.map(s => ({ value: s, label: s })),
+      },
+      { key: 'zip_code', label: 'ZIP Code', type: 'text' },
+    ],
+  },
+  {
+    title: 'Financial',
+    fields: [
+      {
+        key: 'employment_status', label: 'Employment Status', type: 'select',
+        options: [
+          { value: 'employed', label: 'Employed' },
+          { value: 'unemployed', label: 'Unemployed' },
+          { value: 'part-time', label: 'Part-time' },
+          { value: 'retired', label: 'Retired' },
+          { value: 'student', label: 'Student' },
+        ],
+      },
+      { key: 'annual_income_last_year', label: 'Annual Income (last year, $)', type: 'number' },
+      { key: 'monthly_income', label: 'Current Monthly Income ($)', type: 'number' },
+      { key: 'annual_wages', label: 'Annual Wages ($)', type: 'number' },
+      { key: 'employer_name', label: 'Employer Name', type: 'text' },
+    ],
+  },
+  {
+    title: 'Household',
+    fields: [
+      { key: 'household_size', label: 'Household Size', type: 'number' },
+      {
+        key: 'has_children', label: 'Has Children Under 18', type: 'select',
+        options: [{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }],
+      },
+      { key: 'num_children', label: 'Number of Children', type: 'number' },
+      {
+        key: 'citizenship_status', label: 'Citizenship Status', type: 'select',
+        options: [
+          { value: 'citizen', label: 'U.S. Citizen' },
+          { value: 'permanent_resident', label: 'Permanent Resident' },
+          { value: 'visa', label: 'Visa Holder' },
+          { value: 'undocumented', label: 'Undocumented' },
+          { value: 'prefer_not_to_say', label: 'Prefer not to say' },
+        ],
+      },
+      {
+        key: 'disability_status', label: 'Disability Status', type: 'select',
+        options: [
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
+          { value: 'prefer_not_to_say', label: 'Prefer not to say' },
+        ],
+      },
+    ],
+  },
+  {
+    title: 'Other',
+    fields: [
+      { key: 'ssn_last4', label: 'Last 4 of SSN', type: 'text' },
+      {
+        key: 'student_status', label: 'Student Status', type: 'select',
+        options: [
+          { value: 'yes_full_time', label: 'Full-time student' },
+          { value: 'yes_part_time', label: 'Part-time student' },
+          { value: 'no', label: 'Not a student' },
+        ],
+      },
+    ],
+  },
+]
+
+function getFactValue(facts, key) {
+  return facts.find(f => f.field_key === key)?.field_value ?? null
+}
+
+function FactRow({ fieldDef, value, onSave }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+  const [saving, setSaving] = useState(false)
+  const isHcGov = HEALTHCARE_GOV_KEYS.has(fieldDef.key)
+
+  function startEdit() {
+    setDraft(value ?? '')
+    setEditing(true)
+  }
+
+  async function save() {
+    if (!draft && draft !== '0') return
+    setSaving(true)
+    await onSave(fieldDef.key, draft)
+    setSaving(false)
+    setEditing(false)
+  }
+
+  return (
+    <div className="flex items-start gap-3 py-2.5 border-b border-gray-100 last:border-0">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-0.5">
+          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+            {fieldDef.label}
+          </span>
+          {isHcGov && (
+            <span
+              className="text-xs px-1.5 py-0.5 rounded-full font-medium"
+              style={{ background: '#eff6ff', color: '#2563eb' }}
+              title="Used when autofilling healthcare.gov"
+            >
+              healthcare.gov
+            </span>
+          )}
+        </div>
+
+        {editing ? (
+          <div className="flex items-center gap-2 mt-1">
+            {fieldDef.type === 'select' ? (
+              <select
+                value={draft}
+                onChange={e => setDraft(e.target.value)}
+                className="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autoFocus
+              >
+                <option value="">— select —</option>
+                {fieldDef.options.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type={fieldDef.type}
+                value={draft}
+                onChange={e => setDraft(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false) }}
+                className="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autoFocus
+              />
+            )}
+            <button
+              onClick={save}
+              disabled={saving}
+              className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg disabled:opacity-50 shrink-0"
+            >
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+            <button
+              onClick={() => setEditing(false)}
+              className="text-xs text-gray-500 hover:text-gray-700 shrink-0"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <p className={`text-sm mt-0.5 ${value ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>
+            {value ?? '—'}
+          </p>
+        )}
+      </div>
+
+      {!editing && (
+        <button
+          onClick={startEdit}
+          className="text-xs text-blue-500 hover:text-blue-700 shrink-0 mt-0.5 font-medium"
+        >
+          {value ? 'Edit' : 'Add'}
+        </button>
+      )}
+    </div>
+  )
+}
+
+function FactSection({ section, facts, onSave }) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="px-5 py-3 border-b border-gray-100" style={{ background: '#f9f5ff' }}>
+        <h2 className="text-sm font-semibold" style={{ color: '#2d1659' }}>{section.title}</h2>
+      </div>
+      <div className="px-5">
+        {section.fields.map(f => (
+          <FactRow
+            key={f.key}
+            fieldDef={f}
+            value={getFactValue(facts, f.key)}
+            onSave={onSave}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default function AutofillProfile() {
+  const { facts, upsertFact } = useUserContext()
+  const [saved, setSaved] = useState(null)
+
+  async function handleSave(key, value) {
+    await upsertFact(key, value, 'manual')
+    setSaved(key)
+    setTimeout(() => setSaved(null), 2000)
+  }
+
+  const hcGovFilled = AUTOFILL_SECTIONS
+    .flatMap(s => s.fields)
+    .filter(f => HEALTHCARE_GOV_KEYS.has(f.key) && getFactValue(facts, f.key))
+    .length
+
+  return (
+    <Sidebar>
+      <div className="max-w-2xl mx-auto px-8 py-10 flex flex-col gap-6">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: '#1e0f3d' }}>Autofill Profile</h1>
+          <p className="text-sm mt-1 text-gray-500">
+            This information is used to autofill government benefit applications.
+          </p>
+        </div>
+
+        <div
+          className="rounded-xl px-5 py-4 flex items-start gap-3"
+          style={{ background: '#eff6ff', border: '1px solid #bfdbfe' }}
+        >
+          <span style={{ fontSize: 20 }}>✦</span>
+          <div>
+            <p className="text-sm font-semibold text-blue-800">
+              healthcare.gov autofill — {hcGovFilled} of {HEALTHCARE_GOV_KEYS.size} fields ready
+            </p>
+            <p className="text-xs text-blue-700 mt-0.5">
+              Fields tagged <span className="font-semibold">healthcare.gov</span> below will be filled automatically when you visit healthcare.gov.
+            </p>
+          </div>
+        </div>
+
+        {saved && (
+          <div className="fixed bottom-6 right-6 bg-green-600 text-white text-sm font-medium px-4 py-2 rounded-xl shadow-lg z-50">
+            Saved ✓
+          </div>
+        )}
+
+        {AUTOFILL_SECTIONS.map(section => (
+          <FactSection
+            key={section.title}
+            section={section}
+            facts={facts}
+            onSave={handleSave}
+          />
+        ))}
+      </div>
+    </Sidebar>
+  )
+}

@@ -101,7 +101,7 @@ export default function ProgramCard({ userProgram }) {
           <div className="flex flex-col gap-2 sm:flex-row">
             <Link
               to={`/programs/${program_id}`}
-              className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+              className="inline-flex min-w-[11.5rem] items-center justify-center whitespace-nowrap rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
             >
               View details
             </Link>
@@ -109,7 +109,7 @@ export default function ProgramCard({ userProgram }) {
               href={prog.application_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-stone-400 hover:bg-stone-50"
+              className="inline-flex min-w-[13rem] items-center justify-center whitespace-nowrap rounded-xl border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-stone-400 hover:bg-stone-50"
             >
               Official application
             </a>

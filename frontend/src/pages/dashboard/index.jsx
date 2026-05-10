@@ -67,7 +67,7 @@ export default function Dashboard() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setSearchOpen(true)}
-                  className="text-xs font-semibold px-3 py-1.5 rounded-full transition-all"
+                  className="inline-flex min-w-[12rem] items-center justify-center whitespace-nowrap rounded-xl px-5 py-2 text-sm font-semibold transition-all"
                   style={{ background: 'rgba(45,22,89,0.08)', color: '#2d1659', border: '1px solid rgba(45,22,89,0.18)' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(45,22,89,0.15)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'rgba(45,22,89,0.08)'}
@@ -76,7 +76,7 @@ export default function Dashboard() {
                 </button>
                 <button
                   onClick={() => setChatOpen(true)}
-                  className="text-xs font-semibold px-3 py-1.5 rounded-full transition-all"
+                  className="inline-flex min-w-[12rem] items-center justify-center whitespace-nowrap rounded-xl px-5 py-2 text-sm font-semibold transition-all"
                   style={{ background: 'rgba(45,22,89,0.08)', color: '#2d1659', border: '1px solid rgba(45,22,89,0.18)' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(45,22,89,0.15)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'rgba(45,22,89,0.08)'}

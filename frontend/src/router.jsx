@@ -11,6 +11,7 @@ import ProgramDetail from './pages/programs/ProgramDetail'
 import ApplicationForm from './pages/programs/ApplicationForm'
 import Documents from './pages/documents'
 import Settings from './pages/settings'
+import AutofillProfile from './pages/autofill-profile'
 
 export const router = createBrowserRouter([
   { path: '/', element: <Landing /> },
@@ -40,5 +41,9 @@ export const router = createBrowserRouter([
   {
     path: '/settings',
     element: <AuthGuard><OnboardingGuard><Settings /></OnboardingGuard></AuthGuard>,
+  },
+  {
+    path: '/profile',
+    element: <AuthGuard><OnboardingGuard><AutofillProfile /></OnboardingGuard></AuthGuard>,
   },
 ])

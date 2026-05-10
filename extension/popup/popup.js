@@ -11,19 +11,19 @@ const root = document.getElementById('root')
 
 function getStoredAuth() {
   return new Promise(resolve => {
-    chrome.storage.local.get(['aa_access_token', 'aa_user_email', 'aa_user_name'], resolve)
+    chrome.storage.local.get(['aa_access_token', 'aa_refresh_token', 'aa_user_email', 'aa_user_name'], resolve)
   })
 }
 
-function setStoredAuth(token, email, name) {
+function setStoredAuth(token, refresh, email, name) {
   return new Promise(resolve => {
-    chrome.storage.local.set({ aa_access_token: token, aa_user_email: email, aa_user_name: name }, resolve)
+    chrome.storage.local.set({ aa_access_token: token, aa_refresh_token: refresh, aa_user_email: email, aa_user_name: name }, resolve)
   })
 }
 
 function clearStoredAuth() {
   return new Promise(resolve => {
-    chrome.storage.local.remove(['aa_access_token', 'aa_user_email', 'aa_user_name'], resolve)
+    chrome.storage.local.remove(['aa_access_token', 'aa_refresh_token', 'aa_user_email', 'aa_user_name'], resolve)
   })
 }
 
@@ -39,14 +39,65 @@ async function signIn(email, password) {
     body: JSON.stringify({ email, password }),
   })
   const data = await res.json()
-  if (data.error || data.error_description) {
+  if (!res.ok || data.error || data.error_description) {
     throw new Error(data.error_description || data.error || 'Login failed')
   }
   return {
     token: data.access_token,
+    refresh: data.refresh_token,
     email: data.user?.email || email,
     name: data.user?.user_metadata?.full_name || email.split('@')[0],
   }
+}
+
+async function doRefreshToken(refreshTokenValue) {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({ refresh_token: refreshTokenValue }),
+  })
+  const data = await res.json()
+  if (!res.ok || data.error) {
+    throw new Error(data.error_description || data.error || 'Refresh failed')
+  }
+  return {
+    token: data.access_token,
+    refresh: data.refresh_token,
+    email: data.user?.email,
+    name: data.user?.user_metadata?.full_name,
+  }
+}
+
+async function validateAndRefresh(stored) {
+  const { aa_access_token: token, aa_refresh_token: refresh, aa_user_email: email, aa_user_name: name } = stored
+
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${token}`,
+    },
+  })
+
+  if (res.ok) {
+    return { email, name }
+  }
+
+  // Token invalid — try to refresh
+  if (refresh) {
+    try {
+      const refreshed = await doRefreshToken(refresh)
+      await setStoredAuth(refreshed.token, refreshed.refresh, refreshed.email || email, refreshed.name || name)
+      return { email: refreshed.email || email, name: refreshed.name || name }
+    } catch {
+      // Refresh failed — fall through to clear
+    }
+  }
+
+  await clearStoredAuth()
+  throw new Error('session_expired')
 }
 
 // ─── Views ───────────────────────────────────────────────────────────────────
@@ -82,8 +133,8 @@ function renderLogin(errorMsg = '') {
     loginBtn.innerHTML = '<span class="spinner"></span>Logging in…'
 
     try {
-      const { token, email: userEmail, name } = await signIn(email, password)
-      await setStoredAuth(token, userEmail, name)
+      const { token, refresh, email: userEmail, name } = await signIn(email, password)
+      await setStoredAuth(token, refresh, userEmail, name)
       renderLoggedIn(userEmail, name)
     } catch (e) {
       renderLogin(e.message)
@@ -91,6 +142,7 @@ function renderLogin(errorMsg = '') {
   }
 
   loginBtn.addEventListener('click', handleLogin)
+  emailEl.addEventListener('keydown', e => { if (e.key === 'Enter') passEl.focus() })
   passEl.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin() })
 
   document.getElementById('aa-signup-btn').addEventListener('click', () => {
@@ -108,7 +160,7 @@ function renderLoggedIn(email, name) {
     </div>
     <div class="tip">
       <strong>Ready to autofill</strong>
-      Visit a benefits portal — ABE.illinois.gov or healthcare.gov — and the AccessAid banner will appear.
+      Visit a benefits portal — healthcare.gov or ABE.illinois.gov — and the AccessAid banner will appear.
     </div>
     <button class="btn btn-primary" id="aa-dashboard-btn">Open Dashboard</button>
     <br>
@@ -125,14 +177,29 @@ function renderLoggedIn(email, name) {
   })
 }
 
+function renderLoading() {
+  root.innerHTML = `<p style="color:#6b7280;font-size:13px;text-align:center;padding:20px 0;">Checking session…</p>`
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 async function init() {
   const stored = await getStoredAuth()
-  if (stored.aa_access_token) {
-    renderLoggedIn(stored.aa_user_email, stored.aa_user_name)
-  } else {
+  if (!stored.aa_access_token) {
     renderLogin()
+    return
+  }
+
+  renderLoading()
+
+  try {
+    const { email, name } = await validateAndRefresh(stored)
+    renderLoggedIn(email, name)
+  } catch (e) {
+    const msg = e.message === 'session_expired'
+      ? 'Session expired — please log in again.'
+      : e.message
+    renderLogin(msg)
   }
 }
 

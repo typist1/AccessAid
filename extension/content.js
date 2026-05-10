@@ -16,6 +16,12 @@ async function getAccessToken() {
   })
 }
 
+function clearStoredAuth() {
+  return new Promise(resolve => {
+    chrome.storage.local.remove(['aa_access_token', 'aa_refresh_token', 'aa_user_email', 'aa_user_name'], resolve)
+  })
+}
+
 // ─── Portal detection ────────────────────────────────────────────────────────
 
 function getPortalId() {
@@ -97,8 +103,21 @@ function detectFields() {
       }
     }
 
+    // Strategy 7: nearest preceding heading/paragraph text within the same form section
+    if (!label) {
+      let ancestor = el.parentElement
+      for (let i = 0; i < 4 && ancestor; i++) {
+        const heading = ancestor.querySelector('legend, h1, h2, h3, h4, p, span')
+        if (heading && heading !== el) {
+          const text = heading.textContent.trim()
+          if (text && text.length < 80) { label = text; break }
+        }
+        ancestor = ancestor.parentElement
+      }
+    }
+
     label = label.replace(/[*:†‡§]/g, '').trim()
-    if (!label || label.length > 80) return
+    if (!label || label.length > 120) return
 
     const key = `${label}|${type}`
     if (seen.has(key)) return
@@ -246,6 +265,13 @@ async function runAutofill(fields, token) {
       }),
     })
 
+    // Session expired — clear token and prompt re-login
+    if (resp.status === 401) {
+      await clearStoredAuth()
+      showLoginBanner()
+      return
+    }
+
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}))
       throw new Error(err.error || `HTTP ${resp.status}`)
@@ -318,6 +344,8 @@ init()
 // Retry for pages where forms load dynamically after document_idle
 setTimeout(init, 1500)
 setTimeout(init, 3500)
+// healthcare.gov screener can take longer to render
+setTimeout(init, 6000)
 
 // Re-run on SPA navigation — reset dismissed state on each new page
 let lastUrl = location.href
@@ -327,6 +355,7 @@ const navObserver = new MutationObserver(() => {
     dismissed = false
     setTimeout(() => { removeBanner(); init() }, 700)
     setTimeout(init, 1500)
+    setTimeout(init, 4000)
   }
 })
 navObserver.observe(document.documentElement, { childList: true, subtree: true })

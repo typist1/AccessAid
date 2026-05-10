@@ -22,6 +22,7 @@ router.post('/facts', requireAuth, async (req, res, next) => {
         extraction_status: 'completed',
         ...(ocrText && { extracted_text: ocrText }),
         fields_extracted: Object.keys(facts).length,
+        extracted_facts: facts,
       }).eq('id', documentId)
     }
 
@@ -34,7 +35,7 @@ router.post('/facts', requireAuth, async (req, res, next) => {
 router.post('/confirm', requireAuth, async (req, res, next) => {
   try {
     const userId = req.user.id
-    const { facts, documentType } = req.body
+    const { facts, documentType, documentId } = req.body
 
     const upserts = Object.entries(facts).map(([key, value]) => ({
       user_id: userId,
@@ -44,6 +45,14 @@ router.post('/confirm', requireAuth, async (req, res, next) => {
     }))
 
     await supabaseAdmin.from('user_facts').upsert(upserts, { onConflict: 'user_id,field_key' })
+
+    if (documentId) {
+      await supabaseAdmin.from('documents').update({
+        extracted_facts: facts,
+        fields_extracted: Object.keys(facts).length,
+      }).eq('id', documentId)
+    }
+
     res.json({ saved: upserts.length })
   } catch (err) {
     next(err)

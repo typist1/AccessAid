@@ -5,8 +5,18 @@ import { useAuthContext } from '../../context/AuthContext'
 import { useToast } from '../../components/ui/Toast'
 import Sidebar from '../../components/layout/Sidebar'
 import DocumentUploader from '../../components/documents/DocumentUploader'
+import ExtractionReview from '../../components/documents/ExtractionReview'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
+import Modal from '../../components/ui/Modal'
+import Spinner from '../../components/ui/Spinner'
+
+function getFileKind(doc) {
+  const name = (doc.file_name || doc.file_url || '').toLowerCase()
+  if (/\.(jpg|jpeg|png|gif|webp)$/i.test(name)) return 'image'
+  if (/\.pdf$/i.test(name)) return 'pdf'
+  return 'other'
+}
 
 export default function Documents() {
   const { t } = useTranslation()
@@ -14,6 +24,12 @@ export default function Documents() {
   const { toast } = useToast()
   const [docs, setDocs] = useState([])
   const [showUploader, setShowUploader] = useState(false)
+  const [previewDoc, setPreviewDoc] = useState(null)
+  const [previewUrl, setPreviewUrl] = useState('')
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [reviewDoc, setReviewDoc] = useState(null)
+  const [reviewFacts, setReviewFacts] = useState({})
+  const [reviewLoading, setReviewLoading] = useState(false)
 
   useEffect(() => { fetchDocs() }, [])
 
@@ -34,6 +50,86 @@ export default function Documents() {
     }
     await supabase.from('documents').delete().eq('id', doc.id)
     toast('Document deleted', 'success')
+    await fetchDocs()
+  }
+
+  async function handleViewDoc(doc) {
+    if (!doc.file_url) return
+    setPreviewDoc(doc)
+    setPreviewLoading(true)
+    setPreviewUrl('')
+
+    const { data, error } = await supabase.storage
+      .from('documents')
+      .createSignedUrl(doc.file_url, 60 * 15)
+
+    if (error || !data?.signedUrl) {
+      toast(t('documents.preview_error'), 'error')
+      setPreviewDoc(null)
+      setPreviewLoading(false)
+      return
+    }
+
+    setPreviewUrl(data.signedUrl)
+    setPreviewLoading(false)
+  }
+
+  async function handleReviewDoc(doc) {
+    setReviewDoc(doc)
+    setReviewLoading(true)
+
+    const savedFacts = doc.extracted_facts && typeof doc.extracted_facts === 'object'
+      ? doc.extracted_facts
+      : {}
+
+    if (Object.keys(savedFacts).length > 0) {
+      setReviewFacts(savedFacts)
+      setReviewLoading(false)
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('user_facts')
+      .select('field_key, field_value')
+      .eq('user_id', user.id)
+      .eq('source', doc.document_type)
+
+    if (error) {
+      toast(t('documents.review_error'), 'error')
+      setReviewDoc(null)
+      setReviewLoading(false)
+      return
+    }
+
+    const fallbackFacts = Object.fromEntries((data ?? []).map(item => [item.field_key, item.field_value]))
+    setReviewFacts(fallbackFacts)
+    setReviewLoading(false)
+  }
+
+  async function handleSaveReviewedFacts(confirmedFacts) {
+    if (!reviewDoc) return
+
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/extract/confirm`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        facts: confirmedFacts,
+        documentType: reviewDoc.document_type,
+        documentId: reviewDoc.id,
+      }),
+    })
+
+    if (!res.ok) {
+      toast(t('documents.review_save_error'), 'error')
+      return
+    }
+
+    toast(t('documents.review_saved'), 'success')
+    setReviewDoc(null)
     await fetchDocs()
   }
 
@@ -87,6 +183,20 @@ export default function Documents() {
                 }>
                   {doc.extraction_status}
                 </Badge>
+                {doc.file_url && (
+                  <button
+                    onClick={() => handleViewDoc(doc)}
+                    className="text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    {t('documents.view_file_btn')}
+                  </button>
+                )}
+                <button
+                  onClick={() => handleReviewDoc(doc)}
+                  className="text-xs text-slate-600 hover:text-slate-900"
+                >
+                  {t('documents.review_output_btn')}
+                </button>
                 <button
                   onClick={() => handleDeleteDoc(doc)}
                   className="text-xs text-red-500 hover:text-red-700"
@@ -98,6 +208,71 @@ export default function Documents() {
           ))}
         </div>
       </div>
+
+      <Modal
+        open={Boolean(previewDoc)}
+        onClose={() => { setPreviewDoc(null); setPreviewUrl('') }}
+        title={previewDoc?.file_name || t('documents.document_fallback')}
+        panelClassName="max-w-5xl"
+      >
+        {previewLoading && (
+          <div className="flex justify-center py-16">
+            <Spinner />
+          </div>
+        )}
+
+        {!previewLoading && previewDoc && previewUrl && (
+          <div className="flex flex-col gap-4">
+            {getFileKind(previewDoc) === 'image' && (
+              <img
+                src={previewUrl}
+                alt={previewDoc.file_name || t('documents.document_fallback')}
+                className="max-h-[75vh] w-full rounded-lg object-contain bg-stone-50"
+              />
+            )}
+            {getFileKind(previewDoc) === 'pdf' && (
+              <iframe
+                src={previewUrl}
+                title={previewDoc.file_name || t('documents.document_fallback')}
+                className="h-[75vh] w-full rounded-lg border border-gray-200"
+              />
+            )}
+            {getFileKind(previewDoc) === 'other' && (
+              <div className="rounded-lg bg-stone-50 p-6 text-sm text-gray-600">
+                {t('documents.preview_unavailable')}
+              </div>
+            )}
+            <div>
+              <a
+                href={previewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-medium text-blue-600 hover:text-blue-800"
+              >
+                {t('documents.open_new_tab')}
+              </a>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        open={Boolean(reviewDoc)}
+        onClose={() => setReviewDoc(null)}
+        title={t('documents.review_modal_title')}
+      >
+        {reviewLoading ? (
+          <div className="flex justify-center py-16">
+            <Spinner />
+          </div>
+        ) : (
+          <ExtractionReview
+            facts={reviewFacts}
+            onConfirm={handleSaveReviewedFacts}
+            onCancel={() => setReviewDoc(null)}
+          />
+        )}
+      </Modal>
     </Sidebar>
   )
 }

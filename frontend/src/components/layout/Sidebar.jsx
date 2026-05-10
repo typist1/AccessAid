@@ -11,6 +11,7 @@ export default function Sidebar({ children }) {
 
   const NAV = [
     { to: '/dashboard', label: t('sidebar.dashboard') },
+    { to: '/profile', label: 'Autofill Profile' },
     { to: '/documents', label: t('sidebar.documents') },
     { to: '/settings', label: t('sidebar.settings') },
   ]

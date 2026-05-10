@@ -46,6 +46,7 @@ export default function DocumentUploader({ onDone }) {
   const [docType, setDocType] = useState('')
   const [stage, setStage] = useState('pick') // pick → uploading → extracting → review → done
   const [facts, setFacts] = useState({})
+  const [documentId, setDocumentId] = useState(null)
   const [error, setError] = useState('')
 
   function handleFileChange(e) {
@@ -74,6 +75,7 @@ export default function DocumentUploader({ onDone }) {
         file_url: filePath,
         extraction_status: 'pending',
       }).select().single()
+      setDocumentId(doc.id)
 
       // Convert to base64 and send directly to Claude Vision — no OCR step
       setStage('extracting')
@@ -106,7 +108,7 @@ export default function DocumentUploader({ onDone }) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${session.access_token}`,
       },
-      body: JSON.stringify({ facts: confirmedFacts, documentType: docType }),
+      body: JSON.stringify({ facts: confirmedFacts, documentType: docType, documentId }),
     })
     const fieldCount = Object.keys(confirmedFacts).length
     toast(`Document processed — ${fieldCount} field${fieldCount !== 1 ? 's' : ''} saved to your profile`, 'success')
@@ -124,7 +126,7 @@ export default function DocumentUploader({ onDone }) {
         <p className="text-2xl mb-2">✅</p>
         <p className="font-semibold text-gray-900">Document processed successfully!</p>
         <p className="text-sm text-gray-600 mt-1">Your information has been saved to your profile.</p>
-        <Button className="mt-4" onClick={() => { setStage('pick'); setFile(null); setDocType('') }}>Upload Another</Button>
+        <Button className="mt-4" onClick={() => { setStage('pick'); setFile(null); setDocType(''); setDocumentId(null) }}>Upload Another</Button>
       </div>
     )
   }
