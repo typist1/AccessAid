@@ -5,9 +5,10 @@ import supabaseAdmin from '../lib/supabaseAdmin.js'
 const router = Router()
 
 const ALLOWED_FIELDS = [
-  'full_name', 'age', 'state', 'employment_status', 'income',
-  'household_size', 'citizenship_status', 'has_children',
-  'children_count', 'disability_status', 'student_status',
+  'full_name', 'age', 'state', 'zip_code', 'employment_status',
+  'monthly_income_current', 'annual_income_last_year',
+  'household_size', 'citizenship_status', 'has_children', 'num_children',
+  'disability_status', 'pregnant', 'student_status', 'is_veteran',
   'language_preference', 'delete_docs_after_extraction',
 ]
 
@@ -22,12 +23,26 @@ router.put('/', requireAuth, async (req, res, next) => {
       return res.status(400).json({ error: 'No valid fields to update' })
     }
 
-    const { error } = await supabaseAdmin
+    const { error: profileErr } = await supabaseAdmin
       .from('user_profile')
       .update(updates)
       .eq('user_id', userId)
 
-    if (error) throw error
+    if (profileErr) throw profileErr
+
+    // Mirror to user_facts so extension autofill stays in sync
+    const factRows = Object.entries(updates).map(([field_key, value]) => ({
+      user_id: userId,
+      field_key,
+      field_value: String(value),
+      source: 'settings',
+    }))
+    const { error: factsErr } = await supabaseAdmin
+      .from('user_facts')
+      .upsert(factRows, { onConflict: 'user_id,field_key' })
+
+    if (factsErr) throw factsErr
+
     res.json({ updated: true })
   } catch (err) {
     next(err)

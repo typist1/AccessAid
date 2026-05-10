@@ -10,6 +10,7 @@ import programsRoutes from './routes/programs.js'
 import accountRoutes from './routes/account.js'
 import profileRoutes from './routes/profile.js'
 import extensionRoutes from './routes/extension.js'
+import voiceRoutes from './routes/voice.js'
 import { cleanupExpiredDocuments } from './services/cleanup.js'
 
 const app = express()
@@ -25,6 +26,7 @@ app.use('/api/programs', programsRoutes)
 app.use('/api/account', accountRoutes)
 app.use('/api/profile', profileRoutes)
 app.use('/api/extension', extensionRoutes)
+app.use('/api/voice', voiceRoutes)
 
 app.use(errorHandler)
 

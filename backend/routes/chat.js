@@ -5,17 +5,20 @@ import { chat } from '../services/claude.js'
 
 const router = Router()
 
-const DISCLAIMER = '\n\n_This is informational guidance only and does not constitute legal or financial advice._'
+const NAV_PATTERN = /\[NAVIGATE:([^\]]+)\]/
+
+// Pages the assistant can navigate to
+const VALID_PATHS = ['/dashboard', '/programs', '/documents', '/settings']
 
 router.post('/message', requireAuth, async (req, res, next) => {
   try {
     const userId = req.user.id
-    const { message, history = [], programContext = null } = req.body
+    const { message, history = [], programContext = null, detectedLanguage = null } = req.body
 
     const [{ data: profile }, { data: programs }] = await Promise.all([
       supabaseAdmin
         .from('user_profile')
-        .select('full_name, state, income, household_size, employment_status, has_children')
+        .select('full_name, state, income, household_size, employment_status, has_children, language_preference')
         .eq('user_id', userId)
         .single(),
       supabaseAdmin
@@ -23,7 +26,6 @@ router.post('/message', requireAuth, async (req, res, next) => {
         .select('name, category, description_en, eligibility_rules'),
     ])
 
-    // Include all programs inline — corpus is small enough to fit in context
     const programSummary = (programs ?? [])
       .map(p => `${p.name} (${p.category}): ${p.description_en}`)
       .join('\n')
@@ -35,6 +37,10 @@ Always:
 - Say "you may qualify" — never "you qualify"
 - Never give legal or financial advice
 - If unsure, say so
+- Detect the language the user is writing in and ALWAYS respond in that same language.
+- Use markdown formatting: **bold** for key terms, bullet lists for steps or options, headers for sections when helpful.
+
+Navigation: If the user asks to go to a specific section of the app, append [NAVIGATE:/path] at the very end of your response (after the main text). Valid paths: /dashboard, /programs, /documents, /settings. Only include this if the user clearly wants to navigate somewhere.
 
 User profile:
 - Name: ${profile?.full_name || 'Unknown'}
@@ -54,12 +60,23 @@ ${programSummary}`
       { role: 'user', content: message },
     ]
 
-    const response = await chat(messages)
+    const raw = await chat(messages)
 
-    // Background: detect new facts from user message
+    // Extract navigation intent
+    const navMatch = raw.match(NAV_PATTERN)
+    let navigateTo = null
+    let response = raw
+
+    if (navMatch) {
+      const path = navMatch[1]
+      if (VALID_PATHS.includes(path)) navigateTo = path
+      // Strip the [NAVIGATE:...] token from display text
+      response = raw.replace(NAV_PATTERN, '').trim()
+    }
+
     detectAndSaveFacts(userId, message).catch(console.error)
 
-    res.json({ response: response + DISCLAIMER })
+    res.json({ response, navigate_to: navigateTo })
   } catch (err) {
     next(err)
   }

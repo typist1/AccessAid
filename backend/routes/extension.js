@@ -71,6 +71,7 @@ router.post('/autofill', requireAuth, async (req, res, next) => {
     ])
 
     const factsMap = Object.fromEntries((factsRows ?? []).map(r => [r.field_key, r.field_value]))
+    if (!factsMap.email && req.user.email) factsMap.email = req.user.email
 
     // Case-insensitive lookup map
     const mappingMap = {}
