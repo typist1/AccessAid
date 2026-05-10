@@ -1,55 +1,56 @@
 import { useState } from 'react'
-import supabase from '../../lib/supabase'
 import { usePrograms } from '../../hooks/usePrograms'
-import { useAuthContext } from '../../context/AuthContext'
 import { useUserContext } from '../../context/UserContext'
 import Sidebar from '../../components/layout/Sidebar'
 import MatchedPrograms from './MatchedPrograms'
 import ApplicationTracker from './ApplicationTracker'
-import QuickActions from './QuickActions'
 import SearchModal from './SearchModal'
 import ChatWidget from '../../components/chat/ChatWidget'
 
 export default function Dashboard() {
-  const { user } = useAuthContext()
   const { profile } = useUserContext()
   const { programs, loading, refetch } = usePrograms()
   const [searchOpen, setSearchOpen] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
-  const [refreshing, setRefreshing] = useState(false)
 
-  async function handleRefresh() {
-    setRefreshing(true)
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/eligibility/score`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      })
-      await refetch()
-    } finally {
-      setRefreshing(false)
-    }
-  }
+  const strong = programs.filter(p => p.eligibility_score === 'strong').length
+  const possible = programs.filter(p => p.eligibility_score === 'possible').length
 
   return (
     <Sidebar>
-      <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col gap-8">
+      <div className="max-w-3xl mx-auto px-8 py-10 flex flex-col gap-10">
+
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Welcome back{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''}
+          <h1 className="text-xl font-semibold text-gray-900">
+            {profile?.full_name ?? 'Dashboard'}
           </h1>
-          <p className="text-gray-600 mt-1">Here are programs you may qualify for.</p>
+          {!loading && programs.length > 0 && (
+            <p className="text-sm text-gray-400 mt-1">
+              {strong} strong, {possible} possible
+            </p>
+          )}
         </div>
 
-        <QuickActions onSearch={() => setSearchOpen(true)} onChat={() => setChatOpen(true)} />
-
-        <MatchedPrograms
-          programs={programs}
-          loading={loading}
-          onRefresh={handleRefresh}
-          refreshing={refreshing}
-        />
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-medium text-gray-700">Programs</h2>
+            <div className="flex gap-4">
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="text-xs text-gray-400 hover:text-gray-700 transition-colors"
+              >
+                Search
+              </button>
+              <button
+                onClick={() => setChatOpen(true)}
+                className="text-xs text-gray-400 hover:text-gray-700 transition-colors"
+              >
+                Ask Assistant
+              </button>
+            </div>
+          </div>
+          <MatchedPrograms programs={programs} loading={loading} />
+        </div>
 
         <ApplicationTracker programs={programs} />
       </div>

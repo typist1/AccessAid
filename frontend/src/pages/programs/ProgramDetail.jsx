@@ -3,6 +3,8 @@ import { useParams, Link } from 'react-router-dom'
 import supabase from '../../lib/supabase'
 import { useAuthContext } from '../../context/AuthContext'
 import { useUserContext } from '../../context/UserContext'
+import { scoreEligibility } from '../../lib/eligibilityEngine'
+import { PROGRAMS } from '../../data/programs'
 import Sidebar from '../../components/layout/Sidebar'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -45,20 +47,24 @@ export default function ProgramDetail() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([
-      supabase.from('programs').select('*').eq('id', id).single(),
-      supabase.from('user_programs').select('*').eq('program_id', id).eq('user_id', user.id).single(),
-      supabase.from('documents')
-        .select('document_type')
-        .eq('user_id', user.id)
-        .eq('extraction_status', 'completed'),
-    ]).then(([{ data: prog }, { data: up }, { data: docs }]) => {
-      setProgram(prog)
-      setUserProgram(up)
-      setUploadedDocTypes(new Set((docs ?? []).map(d => d.document_type)))
-      setLoading(false)
-    })
-  }, [id])
+    const prog = PROGRAMS.find(p => p.id === id) ?? null
+    setProgram(prog)
+
+    if (prog && profile) {
+      const { score, missing } = scoreEligibility(profile, prog)
+      setUserProgram({ eligibility_score: score, missing_docs: missing, notes: null })
+    }
+
+    supabase
+      .from('documents')
+      .select('document_type')
+      .eq('user_id', user.id)
+      .eq('extraction_status', 'completed')
+      .then(({ data: docs }) => {
+        setUploadedDocTypes(new Set((docs ?? []).map(d => d.document_type)))
+        setLoading(false)
+      })
+  }, [id, profile])
 
   if (loading) return <Sidebar><div className="flex justify-center py-20"><Spinner /></div></Sidebar>
   if (!program) return <Sidebar><p className="p-8 text-gray-500">Program not found.</p></Sidebar>
