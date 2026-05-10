@@ -20,14 +20,15 @@ const genericForm = (programName) => ({
   sections: [
     {
       title: 'Applicant Information',
+      title_es: 'Información del solicitante',
       fields: [
-        { id: 'full_name', label: 'Full Name', type: 'text', required: true },
-        { id: 'date_of_birth', label: 'Date of Birth', type: 'date', required: true },
-        { id: 'address', label: 'Home Address', type: 'text', required: true },
-        { id: 'state', label: 'State', type: 'text', required: true },
-        { id: 'household_size', label: 'Household Size', type: 'number', required: true },
-        { id: 'monthly_income', label: 'Monthly Income ($)', type: 'number', required: true },
-        { id: 'phone', label: 'Phone Number', type: 'tel', required: false },
+        { id: 'full_name', label: 'Full Name', label_es: 'Nombre completo', type: 'text', required: true },
+        { id: 'date_of_birth', label: 'Date of Birth', label_es: 'Fecha de nacimiento', type: 'date', required: true },
+        { id: 'address', label: 'Home Address', label_es: 'Dirección de residencia', type: 'text', required: true },
+        { id: 'state', label: 'State', label_es: 'Estado', type: 'text', required: true },
+        { id: 'household_size', label: 'Household Size', label_es: 'Tamaño del hogar', type: 'number', required: true },
+        { id: 'monthly_income', label: 'Monthly Income ($)', label_es: 'Ingreso mensual ($)', type: 'number', required: true },
+        { id: 'phone', label: 'Phone Number', label_es: 'Número de teléfono', type: 'tel', required: false },
       ],
     },
   ],

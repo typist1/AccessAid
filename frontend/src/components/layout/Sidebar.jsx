@@ -1,17 +1,19 @@
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { signOut } from '../../lib/auth'
 import { useState } from 'react'
 import ChatWidget from '../chat/ChatWidget'
 
-const NAV = [
-  { to: '/dashboard', label: 'Dashboard' },
-  { to: '/documents', label: 'Documents' },
-  { to: '/settings', label: 'Settings' },
-]
-
 export default function Sidebar({ children }) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [chatOpen, setChatOpen] = useState(false)
+
+  const NAV = [
+    { to: '/dashboard', label: t('sidebar.dashboard') },
+    { to: '/documents', label: t('sidebar.documents') },
+    { to: '/settings', label: t('sidebar.settings') },
+  ]
 
   async function handleSignOut() {
     await signOut()
@@ -19,9 +21,9 @@ export default function Sidebar({ children }) {
   }
 
   return (
-    <div className="flex min-h-screen" style={{ background: '#f9f5ff' }}>
+    <div className="flex h-screen overflow-hidden" style={{ background: '#f9f5ff' }}>
       <aside
-        className="w-56 flex flex-col py-6 px-4 shrink-0"
+        className="w-56 flex flex-col py-6 px-4 shrink-0 overflow-y-auto"
         style={{ background: 'linear-gradient(160deg, #2d1659 0%, #1a0936 100%)' }}
       >
         <div className="mb-8">
@@ -52,18 +54,18 @@ export default function Sidebar({ children }) {
             onClick={() => setChatOpen(true)}
             className="text-left px-3 py-2 rounded-lg text-sm font-medium text-purple-300 hover:text-white hover:bg-white/10 transition-colors"
           >
-            Ask Assistant
+            {t('sidebar.ask_assistant')}
           </button>
           <button
             onClick={handleSignOut}
             className="text-left px-3 py-2 rounded-lg text-sm font-medium text-purple-500/50 hover:text-purple-300 hover:bg-white/10 transition-colors"
           >
-            Sign out
+            {t('sidebar.sign_out')}
           </button>
         </div>
       </aside>
 
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-y-auto">
         {children}
       </main>
 

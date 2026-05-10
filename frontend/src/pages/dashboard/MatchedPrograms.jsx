@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import ProgramCard from '../../components/programs/ProgramCard'
 import Spinner from '../../components/ui/Spinner'
 
@@ -11,6 +12,7 @@ function ProgramList({ programs }) {
 }
 
 function MatchSection({ title, description, eyebrow, programs }) {
+  const { t } = useTranslation()
   if (programs.length === 0) return null
 
   return (
@@ -23,7 +25,7 @@ function MatchSection({ title, description, eyebrow, programs }) {
         </div>
         <div className="inline-flex w-fit items-center rounded-lg px-3 py-1.5 text-sm font-medium"
           style={{ background: 'rgba(124,58,237,0.08)', color: '#7c3aed' }}>
-          {programs.length} program{programs.length === 1 ? '' : 's'}
+          {programs.length === 1 ? t('dashboard.program_count_singular', { count: 1 }) : t('dashboard.program_count_plural', { count: programs.length })}
         </div>
       </div>
       <ProgramList programs={programs} />
@@ -32,6 +34,7 @@ function MatchSection({ title, description, eyebrow, programs }) {
 }
 
 export default function MatchedPrograms({ programs, loading }) {
+  const { t } = useTranslation()
   const [showUnlikely, setShowUnlikely] = useState(false)
 
   const strong = programs.filter(p => p.eligibility_score === 'strong')
@@ -46,7 +49,7 @@ export default function MatchedPrograms({ programs, loading }) {
     return (
       <p className="rounded-2xl border border-dashed px-6 py-10 text-sm"
         style={{ borderColor: 'rgba(124,58,237,0.2)', background: 'rgba(124,58,237,0.04)', color: '#9b6ff0' }}>
-        Complete your profile to see recommended programs here.
+        {t('dashboard.matched_programs_empty')}
       </p>
     )
   }
@@ -54,16 +57,16 @@ export default function MatchedPrograms({ programs, loading }) {
   return (
     <div className="flex flex-col gap-10">
       <MatchSection
-        eyebrow="Top picks"
-        title="Start with these"
-        description="These look like the best use of your time based on your profile."
+        eyebrow={t('dashboard.strong_eyebrow')}
+        title={t('dashboard.strong_title')}
+        description={t('dashboard.strong_desc')}
         programs={strong}
       />
 
       <MatchSection
-        eyebrow="Good backups"
-        title="Also worth checking"
-        description="May still fit — especially if your situation has details the screener didn't capture."
+        eyebrow={t('dashboard.possible_eyebrow')}
+        title={t('dashboard.possible_title')}
+        description={t('dashboard.possible_desc')}
         programs={possible}
       />
 
@@ -75,7 +78,7 @@ export default function MatchedPrograms({ programs, loading }) {
             className="text-sm font-medium transition-colors"
             style={{ color: '#9b6ff0' }}
           >
-            {showUnlikely ? 'Hide' : 'Show'} lower-priority options ({unlikely.length})
+            {showUnlikely ? t('dashboard.hide_unlikely', { count: unlikely.length }) : t('dashboard.show_unlikely', { count: unlikely.length })}
           </button>
           {showUnlikely && (
             <div className="mt-4">
@@ -86,7 +89,7 @@ export default function MatchedPrograms({ programs, loading }) {
       )}
 
       <p className="text-xs" style={{ color: '#b09fd4' }}>
-        Informational only. Final eligibility confirmed by the official application.
+        {t('dashboard.informational_note')}
       </p>
     </div>
   )

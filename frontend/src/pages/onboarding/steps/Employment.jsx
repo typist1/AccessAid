@@ -1,22 +1,24 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Button from '../../../components/ui/Button'
 
-const OPTIONS = [
-  { value: 'employed', label: 'Employed full-time' },
-  { value: 'part-time', label: 'Employed part-time' },
-  { value: 'unemployed', label: 'Unemployed' },
-  { value: 'retired', label: 'Retired' },
-  { value: 'student', label: 'Student' },
-  { value: 'self-employed', label: 'Self-employed' },
-]
-
 export default function Employment({ value, onNext, onBack }) {
+  const { t } = useTranslation()
   const [status, setStatus] = useState(value.employment_status ?? '')
+
+  const OPTIONS = [
+    { value: 'employed', label: t('onboarding.employed_full') },
+    { value: 'part-time', label: t('onboarding.employed_part') },
+    { value: 'unemployed', label: t('onboarding.unemployed') },
+    { value: 'retired', label: t('onboarding.retired') },
+    { value: 'student', label: t('onboarding.student') },
+    { value: 'self-employed', label: t('onboarding.self_employed') },
+  ]
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">What's your employment status?</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{t('onboarding.employment_title')}</h2>
       </div>
       <div className="flex flex-col gap-2">
         {OPTIONS.map(opt => (
@@ -30,8 +32,8 @@ export default function Employment({ value, onNext, onBack }) {
         ))}
       </div>
       <div className="flex gap-3 justify-end">
-        {onBack && <Button variant="ghost" onClick={onBack}>Back</Button>}
-        <Button onClick={() => onNext({ employment_status: status })} disabled={!status}>Continue</Button>
+        {onBack && <Button variant="ghost" onClick={onBack}>{t('common.back')}</Button>}
+        <Button onClick={() => onNext({ employment_status: status })} disabled={!status}>{t('common.continue')}</Button>
       </div>
     </div>
   )

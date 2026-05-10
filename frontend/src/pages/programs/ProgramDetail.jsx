@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import supabase from '../../lib/supabase'
 import { useAuthContext } from '../../context/AuthContext'
 import { useUserContext } from '../../context/UserContext'
+import { useLanguage } from '../../context/LanguageContext'
 import { scoreEligibility } from '../../lib/eligibilityEngine'
 import { PROGRAMS } from '../../data/programs'
 import Sidebar from '../../components/layout/Sidebar'
@@ -10,7 +12,6 @@ import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import Spinner from '../../components/ui/Spinner'
 
-// Maps program required_documents keys → document types the user may have uploaded
 const DOC_TYPE_MAP = {
   government_issued_id: ['drivers_license', 'passport'],
   proof_of_residency: ['utility_bill', 'lease_agreement', 'drivers_license'],
@@ -39,8 +40,10 @@ function hasDoc(requiredKey, uploadedSet) {
 
 export default function ProgramDetail() {
   const { id } = useParams()
+  const { t } = useTranslation()
   const { user } = useAuthContext()
   const { profile } = useUserContext()
+  const { language } = useLanguage()
   const [program, setProgram] = useState(null)
   const [userProgram, setUserProgram] = useState(null)
   const [uploadedDocTypes, setUploadedDocTypes] = useState(new Set())
@@ -64,19 +67,39 @@ export default function ProgramDetail() {
         setUploadedDocTypes(new Set((docs ?? []).map(d => d.document_type)))
         setLoading(false)
       })
-  }, [id, profile])
+
+    // Fetch translated description if not English
+    if (language !== 'en') {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) return
+        fetch(`${import.meta.env.VITE_BACKEND_URL}/api/programs/${id}/description?lang=${language}`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        })
+          .then(r => r.json())
+          .then(d => {
+            if (d.description) {
+              setProgram(prev => prev ? { ...prev, description_translated: d.description } : prev)
+            }
+          })
+          .catch(console.error)
+      })
+    }
+  }, [id, profile, language])
 
   if (loading) return <Sidebar><div className="flex justify-center py-20"><Spinner /></div></Sidebar>
-  if (!program) return <Sidebar><p className="p-8 text-gray-500">Program not found.</p></Sidebar>
+  if (!program) return <Sidebar><p className="p-8 text-gray-500">{t('program_detail.not_found')}</p></Sidebar>
 
-  const SCORE_LABEL = { strong: '✅ Strong Match', possible: '🟡 Possible Match', unlikely: '🔴 Unlikely' }
+  const SCORE_LABEL = {
+    strong: t('program_detail.score_strong'),
+    possible: t('program_detail.score_possible'),
+    unlikely: t('program_detail.score_unlikely'),
+  }
 
   return (
     <Sidebar>
       <div className="max-w-3xl mx-auto px-6 py-8 flex flex-col gap-6">
-        <Link to="/dashboard" className="text-sm text-blue-600 hover:underline">← Back to Dashboard</Link>
+        <Link to="/dashboard" className="text-sm text-blue-600 hover:underline">{t('program_detail.back')}</Link>
 
-        {/* Header */}
         <div className="flex flex-col gap-3">
           <div className="flex items-start justify-between gap-4">
             <h1 className="text-3xl font-bold text-gray-900">{program.name}</h1>
@@ -90,38 +113,35 @@ export default function ProgramDetail() {
             <Badge variant={program.category}>{program.category}</Badge>
             {program.application_url && (
               <a href={program.application_url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
-                Official Site →
+                {t('program_detail.official_site')}
               </a>
             )}
           </div>
           <div>
             <Link to={`/programs/${id}/apply`}>
-              <Button>Start Application</Button>
+              <Button>{t('program_detail.start_application')}</Button>
             </Link>
           </div>
         </div>
 
-        {/* Description */}
         <section className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="font-semibold text-gray-900 mb-2">What is this program?</h2>
-          <p className="text-gray-600 text-sm leading-relaxed">{program.description_en}</p>
+          <h2 className="font-semibold text-gray-900 mb-2">{t('program_detail.what_is_title')}</h2>
+          <p className="text-gray-600 text-sm leading-relaxed">
+            {program.description_translated ?? program.description_en}
+          </p>
         </section>
 
-        {/* Why you may qualify */}
         {userProgram?.notes && (
           <section className="bg-blue-50 rounded-xl border border-blue-100 p-5">
-            <h2 className="font-semibold text-blue-900 mb-2">Why you may qualify</h2>
+            <h2 className="font-semibold text-blue-900 mb-2">{t('program_detail.why_qualify_title')}</h2>
             <p className="text-blue-800 text-sm leading-relaxed">{userProgram.notes}</p>
-            <p className="text-xs text-blue-600 mt-2 italic">
-              This is informational guidance only and does not constitute legal or financial advice.
-            </p>
+            <p className="text-xs text-blue-600 mt-2 italic">{t('program_detail.disclaimer')}</p>
           </section>
         )}
 
-        {/* Missing info */}
         {userProgram?.missing_docs?.length > 0 && (
           <section className="bg-yellow-50 rounded-xl border border-yellow-100 p-5">
-            <h2 className="font-semibold text-yellow-900 mb-2">Potential eligibility concerns</h2>
+            <h2 className="font-semibold text-yellow-900 mb-2">{t('program_detail.concerns_title')}</h2>
             <ul className="flex flex-col gap-1">
               {userProgram.missing_docs.map(item => (
                 <li key={item} className="text-yellow-800 text-sm">⚠ {item.replace(/_/g, ' ')}</li>
@@ -130,10 +150,9 @@ export default function ProgramDetail() {
           </section>
         )}
 
-        {/* Required documents */}
         {program.required_documents?.length > 0 && (
           <section className="bg-white rounded-xl border border-gray-200 p-5">
-            <h2 className="font-semibold text-gray-900 mb-3">Required Documents</h2>
+            <h2 className="font-semibold text-gray-900 mb-3">{t('program_detail.required_docs_title')}</h2>
             <ul className="flex flex-col gap-2">
               {program.required_documents.map(doc => {
                 const uploaded = hasDoc(doc, uploadedDocTypes)
@@ -141,29 +160,28 @@ export default function ProgramDetail() {
                   <li key={doc} className="flex items-center justify-between text-sm">
                     <span className="text-gray-700">{doc.replace(/_/g, ' ')}</span>
                     <span className={uploaded ? 'text-green-600 font-medium' : 'text-red-500 font-medium'}>
-                      {uploaded ? '✅ On file' : '❌ Missing'}
+                      {uploaded ? t('program_detail.doc_on_file') : t('program_detail.doc_missing')}
                     </span>
                   </li>
                 )
               })}
             </ul>
             <Link to="/documents" className="mt-4 inline-block">
-              <Button variant="secondary" className="text-sm">Upload Documents</Button>
+              <Button variant="secondary" className="text-sm">{t('program_detail.upload_docs_btn')}</Button>
             </Link>
           </section>
         )}
 
-        {/* Next steps */}
         <section className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="font-semibold text-gray-900 mb-3">Next Steps</h2>
+          <h2 className="font-semibold text-gray-900 mb-3">{t('program_detail.next_steps_title')}</h2>
           <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
-            <li>Review eligibility requirements above</li>
-            <li>Upload any missing documents</li>
-            <li>Click "Start Application" to begin with AI assistance</li>
+            <li>{t('program_detail.next_step_1')}</li>
+            <li>{t('program_detail.next_step_2')}</li>
+            <li>{t('program_detail.next_step_3')}</li>
             {program.application_url && (
               <li>
                 <a href={program.application_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                  Submit through the official site
+                  {t('program_detail.next_step_4')}
                 </a>
               </li>
             )}

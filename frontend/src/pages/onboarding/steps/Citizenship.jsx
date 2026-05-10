@@ -1,22 +1,24 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Button from '../../../components/ui/Button'
 
-const OPTIONS = [
-  { value: 'citizen', label: 'U.S. Citizen' },
-  { value: 'permanent_resident', label: 'Permanent Resident (Green Card)' },
-  { value: 'visa', label: 'Visa Holder' },
-  { value: 'undocumented', label: 'Undocumented' },
-  { value: 'prefer_not_to_say', label: 'Prefer not to say' },
-]
-
 export default function Citizenship({ value, onNext, onBack }) {
+  const { t } = useTranslation()
   const [status, setStatus] = useState(value.citizenship_status ?? '')
+
+  const OPTIONS = [
+    { value: 'citizen', label: t('onboarding.citizen') },
+    { value: 'permanent_resident', label: t('onboarding.permanent_resident') },
+    { value: 'visa', label: t('onboarding.visa') },
+    { value: 'undocumented', label: t('onboarding.undocumented') },
+    { value: 'prefer_not_to_say', label: t('onboarding.prefer_not_to_say') },
+  ]
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">What's your citizenship status?</h2>
-        <p className="text-gray-500 mt-1">Some programs are available regardless of status. Your data is private and secure.</p>
+        <h2 className="text-2xl font-bold text-gray-900">{t('onboarding.citizenship_title')}</h2>
+        <p className="text-gray-500 mt-1">{t('onboarding.citizenship_subtitle')}</p>
       </div>
       <div className="flex flex-col gap-2">
         {OPTIONS.map(opt => (
@@ -30,8 +32,8 @@ export default function Citizenship({ value, onNext, onBack }) {
         ))}
       </div>
       <div className="flex gap-3 justify-end">
-        {onBack && <Button variant="ghost" onClick={onBack}>Back</Button>}
-        <Button onClick={() => onNext({ citizenship_status: status })} disabled={!status}>Continue</Button>
+        {onBack && <Button variant="ghost" onClick={onBack}>{t('common.back')}</Button>}
+        <Button onClick={() => onNext({ citizenship_status: status })} disabled={!status}>{t('common.continue')}</Button>
       </div>
     </div>
   )

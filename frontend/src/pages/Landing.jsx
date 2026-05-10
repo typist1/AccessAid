@@ -1,22 +1,23 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Button from '../components/ui/Button'
+import LanguagePicker from '../components/ui/LanguagePicker'
 import backgroundImg from '../assets/background.png'
 import dancingImg from '../assets/dancing.png'
 import dance2Img from '../assets/dance2.png'
 import meditationImg from '../assets/meditation.png'
 
 export default function Landing() {
+  const { t } = useTranslation()
+
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(160deg, #f5f0ff 0%, #ede8ff 60%, #fff8e7 100%)' }}>
-      {/* background image */}
       <img
         src={backgroundImg}
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
         style={{ opacity: 0.18 }}
         alt=""
       />
-
-      {/* decorative characters */}
       <img
         src={dance2Img}
         className="absolute bottom-0 right-0 w-72 pointer-events-none select-none"
@@ -42,54 +43,54 @@ export default function Landing() {
             <span className="text-2xl font-bold" style={{ color: '#2d1659' }}>AccessAid</span>
             <div className="w-8 h-0.5 mt-0.5 rounded-full" style={{ background: '#d4a843' }} />
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 items-center">
+            <LanguagePicker />
             <Link to="/login">
-              <Button variant="ghost" className="text-purple-900">Sign in</Button>
+              <Button variant="ghost" className="text-purple-900">{t('landing.sign_in')}</Button>
             </Link>
             <Link to="/signup">
-              <Button variant="purple">Get started</Button>
+              <Button variant="purple">{t('landing.get_started')}</Button>
             </Link>
           </div>
         </header>
 
         <main className="max-w-2xl mx-auto px-6 pt-20 pb-48 text-center">
           <h1 className="text-5xl font-bold leading-tight" style={{ color: '#1e0f3d' }}>
-            $140 billion in benefits<br />
-            go <span style={{ color: '#7c3aed' }}>unclaimed every year.</span>
+            {t('landing.headline')}
           </h1>
           <p className="mt-6 text-xl max-w-xl mx-auto" style={{ color: '#4c3875' }}>
-            AccessAid finds government assistance programs you qualify for — and walks you through applying. Free, private, no paperwork headaches.
+            {t('landing.subhead')}
           </p>
           <div className="mt-10 flex gap-4 justify-center">
             <Link to="/signup">
               <Button variant="purple" className="px-8 py-3 text-lg">
-                Find my programs →
+                {t('landing.cta')}
               </Button>
             </Link>
           </div>
 
           <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
             {[
-              { icon: '🔍', title: 'Find what you qualify for', desc: 'Answer a few questions and we match you with SNAP, Medicaid, housing, utility help, and more.' },
-              { icon: '📄', title: 'Upload documents once', desc: 'Scan or upload your ID, pay stubs, or tax forms. We extract the info and auto-fill future applications.' },
-              { icon: '💬', title: 'AI assistant that explains everything', desc: 'Ask anything about a program. Get plain-English answers, not government jargon.' },
+              { icon: '🔍', titleKey: 'landing.card1_title', descKey: 'landing.card1_desc' },
+              { icon: '📄', titleKey: 'landing.card2_title', descKey: 'landing.card2_desc' },
+              { icon: '💬', titleKey: 'landing.card3_title', descKey: 'landing.card3_desc' },
             ].map(card => (
               <div
-                key={card.title}
+                key={card.titleKey}
                 className="rounded-2xl p-6 shadow-sm"
                 style={{ background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(124,58,237,0.12)' }}
               >
                 <div className="text-3xl mb-3">{card.icon}</div>
-                <h3 className="font-semibold mb-2 text-sm" style={{ color: '#1e0f3d' }}>{card.title}</h3>
-                <p className="text-sm" style={{ color: '#7c5bb5' }}>{card.desc}</p>
+                <h3 className="font-semibold mb-2 text-sm" style={{ color: '#1e0f3d' }}>{t(card.titleKey)}</h3>
+                <p className="text-sm" style={{ color: '#7c5bb5' }}>{t(card.descKey)}</p>
               </div>
             ))}
           </div>
         </main>
 
         <footer className="border-t py-8 text-center text-sm" style={{ borderColor: 'rgba(124,58,237,0.1)', color: '#9b6ff0' }}>
-          AccessAid — Informational guidance only, not legal or financial advice.{' '}
-          <Link to="/signup" style={{ color: '#7c3aed' }} className="hover:underline">Get started</Link>
+          {t('landing.footer')}{' '}
+          <Link to="/signup" style={{ color: '#7c3aed' }} className="hover:underline">{t('landing.footer_cta')}</Link>
         </footer>
       </div>
     </div>

@@ -1,20 +1,22 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Button from '../../../components/ui/Button'
 
-const OPTIONS = [
-  { value: 'yes', label: 'Yes' },
-  { value: 'no', label: 'No' },
-  { value: 'prefer_not_to_say', label: 'Prefer not to say' },
-]
-
 export default function Disability({ value, onNext, onBack }) {
+  const { t } = useTranslation()
   const [status, setStatus] = useState(value.disability_status ?? '')
+
+  const OPTIONS = [
+    { value: 'yes', label: t('onboarding.disability_yes') },
+    { value: 'no', label: t('onboarding.disability_no') },
+    { value: 'prefer_not_to_say', label: t('onboarding.disability_prefer') },
+  ]
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Do you have a disability?</h2>
-        <p className="text-gray-500 mt-1">Some programs like SSI and SSDI are specifically for people with disabilities.</p>
+        <h2 className="text-2xl font-bold text-gray-900">{t('onboarding.disability_title')}</h2>
+        <p className="text-gray-500 mt-1">{t('onboarding.disability_subtitle')}</p>
       </div>
       <div className="flex flex-col gap-2">
         {OPTIONS.map(opt => (
@@ -28,8 +30,8 @@ export default function Disability({ value, onNext, onBack }) {
         ))}
       </div>
       <div className="flex gap-3 justify-end">
-        {onBack && <Button variant="ghost" onClick={onBack}>Back</Button>}
-        <Button onClick={() => onNext({ disability_status: status })} disabled={!status}>Continue</Button>
+        {onBack && <Button variant="ghost" onClick={onBack}>{t('common.back')}</Button>}
+        <Button onClick={() => onNext({ disability_status: status })} disabled={!status}>{t('common.continue')}</Button>
       </div>
     </div>
   )

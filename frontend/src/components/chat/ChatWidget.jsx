@@ -1,6 +1,8 @@
+import { useTranslation } from 'react-i18next'
 import ChatPanel from './ChatPanel'
 
 export default function ChatWidget({ open, onClose }) {
+  const { t } = useTranslation()
   if (!open) return null
 
   return (
@@ -8,7 +10,7 @@ export default function ChatWidget({ open, onClose }) {
       <div className="absolute inset-0 bg-black/20" onClick={onClose} />
       <div className="relative bg-white rounded-xl shadow-2xl border border-gray-200 w-full max-w-md h-[600px] flex flex-col overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-          <span className="font-semibold text-gray-900">Benefits Assistant</span>
+          <span className="font-semibold text-gray-900">{t('chat.title_general')}</span>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
         </div>
         <div className="flex-1 overflow-hidden">

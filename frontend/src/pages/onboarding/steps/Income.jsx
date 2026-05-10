@@ -1,21 +1,23 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Button from '../../../components/ui/Button'
 
-const OPTIONS = [
-  { value: '<15k', label: 'Under $15,000 / year' },
-  { value: '15-30k', label: '$15,000 – $30,000 / year' },
-  { value: '30-50k', label: '$30,000 – $50,000 / year' },
-  { value: '50k+', label: 'Over $50,000 / year' },
-]
-
 export default function Income({ value, onNext, onBack }) {
+  const { t } = useTranslation()
   const [income, setIncome] = useState(value.income ?? '')
+
+  const OPTIONS = [
+    { value: '<15k', label: t('onboarding.income_under15k') },
+    { value: '15-30k', label: t('onboarding.income_15_30k') },
+    { value: '30-50k', label: t('onboarding.income_30_50k') },
+    { value: '50k+', label: t('onboarding.income_50kplus') },
+  ]
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">What's your annual household income?</h2>
-        <p className="text-gray-500 mt-1">Include all income sources for your household.</p>
+        <h2 className="text-2xl font-bold text-gray-900">{t('onboarding.income_title')}</h2>
+        <p className="text-gray-500 mt-1">{t('onboarding.income_subtitle')}</p>
       </div>
       <div className="flex flex-col gap-2">
         {OPTIONS.map(opt => (
@@ -29,8 +31,8 @@ export default function Income({ value, onNext, onBack }) {
         ))}
       </div>
       <div className="flex gap-3 justify-end">
-        {onBack && <Button variant="ghost" onClick={onBack}>Back</Button>}
-        <Button onClick={() => onNext({ income })} disabled={!income}>Continue</Button>
+        {onBack && <Button variant="ghost" onClick={onBack}>{t('common.back')}</Button>}
+        <Button onClick={() => onNext({ income })} disabled={!income}>{t('common.continue')}</Button>
       </div>
     </div>
   )

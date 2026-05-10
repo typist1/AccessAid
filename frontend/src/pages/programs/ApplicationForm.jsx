@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import supabase from '../../lib/supabase'
 import { useAuthContext } from '../../context/AuthContext'
 import Sidebar from '../../components/layout/Sidebar'
@@ -11,6 +12,7 @@ import { getFormSchema } from '../../components/forms/schemas'
 
 export default function ApplicationForm() {
   const { id } = useParams()
+  const { t } = useTranslation()
   const { user } = useAuthContext()
   const [program, setProgram] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -27,7 +29,6 @@ export default function ApplicationForm() {
       setLoading(false)
     })
 
-    // Mark as in_progress
     supabase.from('user_programs')
       .update({ status: 'in_progress' })
       .eq('program_id', id)
@@ -51,28 +52,32 @@ export default function ApplicationForm() {
   return (
     <Sidebar>
       <div className="flex h-[calc(100vh-0px)]">
-        {/* Form side */}
         <div className="flex-1 overflow-y-auto p-6">
-          <Link to={`/programs/${id}`} className="text-sm text-blue-600 hover:underline">← Back to Program</Link>
+          <Link to={`/programs/${id}`} className="text-sm text-blue-600 hover:underline">{t('application_form.back')}</Link>
 
           <div className="max-w-2xl mx-auto mt-4">
             <div className="flex items-center gap-3 mb-6">
-              <h1 className="text-2xl font-bold text-gray-900">{program?.name} Application</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {t('application_form.application_title', { programName: program?.name ?? t('application_form.unknown_program') })}
+              </h1>
               <Badge variant={status}>{status.replace('_', ' ')}</Badge>
             </div>
 
             {submitted && (
               <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
-                <p className="text-green-800 font-medium">Application marked as submitted!</p>
+                <p className="text-green-800 font-medium">{t('application_form.submitted_title')}</p>
                 <p className="text-green-700 text-sm mt-1">
-                  Remember to save your confirmation number. Submit directly at{' '}
-                  {program?.application_url && <a href={program.application_url} target="_blank" rel="noopener noreferrer" className="underline">the official site</a>}.
+                  {t('application_form.submitted_body')}{' '}
+                  {program?.application_url && <a href={program.application_url} target="_blank" rel="noopener noreferrer" className="underline">{t('application_form.submitted_official')}</a>}.
                 </p>
               </div>
             )}
 
             <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-6 text-sm text-blue-800">
-              Fields highlighted in <strong>blue</strong> were auto-filled from your profile. Fields in <strong>yellow</strong> still need your input.
+              {t('application_form.autofill_hint', {
+                blue: t('application_form.autofill_hint_blue'),
+                yellow: t('application_form.autofill_hint_yellow'),
+              })}
             </div>
 
             <FormRenderer schema={schema} onStatusChange={handleStatusChange} />
@@ -83,14 +88,13 @@ export default function ApplicationForm() {
                   onClick={() => handleStatusChange('submitted')}
                   className="text-sm text-gray-600 border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50"
                 >
-                  I've submitted on the official site
+                  {t('application_form.mark_submitted')}
                 </button>
               </div>
             )}
           </div>
         </div>
 
-        {/* Chat side */}
         <div className="w-96 shrink-0 border-l border-gray-200 flex flex-col">
           <ChatPanel programName={program?.name} programContext={programContext} />
         </div>

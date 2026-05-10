@@ -4,7 +4,7 @@ export const PROGRAMS = [
     name: 'SNAP (Food Stamps)',
     category: 'food',
     description_en: 'Monthly food benefits on an EBT card to help low-income individuals and families buy groceries.',
-    application_url: 'https://www.fns.usda.gov/snap/state-directory',
+    application_url: 'https://abe.illinois.gov',
     eligibility_rules: {
       gross_income_test: {
         by_household_size: { 1: 1718, 2: 2326, 3: 2933, 4: 3540, 5: 4147, 6: 4754 },
@@ -19,7 +19,7 @@ export const PROGRAMS = [
     name: 'WIC (Women, Infants & Children)',
     category: 'food',
     description_en: 'Provides healthy food, nutrition education, and health referrals to pregnant women, new mothers, infants, and children under 5.',
-    application_url: 'https://www.fns.usda.gov/wic/wic-eligibility-requirements',
+    application_url: 'https://idph.illinois.gov/wic',
     eligibility_rules: {
       eligible_categories: ['pregnant', 'given_birth_within_6_months', 'breastfeeding_up_to_12_months_postpartum', 'infant_under_12_months', 'child_under_5'],
       income_test: { by_household_size: { 1: 2248, 2: 3041, 3: 3834, 4: 4628, 5: 5421 }, each_additional: 793 },
@@ -58,7 +58,7 @@ export const PROGRAMS = [
     name: 'LIHEAP (Utility Bill Assistance)',
     category: 'utilities',
     description_en: 'Helps low-income households pay heating and cooling bills. May also cover emergency energy situations.',
-    application_url: 'https://www.acf.hhs.gov/ocs/map/liheap-grantees-state-and-territory-contact-listing',
+    application_url: 'https://liheap.illinois.gov/',
     eligibility_rules: {
       income_test: { annual_150pct_fpl_by_household: { 1: 21870, 2: 29580, 3: 37290, 4: 45000, 5: 52710, 6: 60420 } },
       must_pay_energy_costs: true,
@@ -81,7 +81,7 @@ export const PROGRAMS = [
     name: 'TANF (Temporary Assistance for Needy Families)',
     category: 'financial',
     description_en: 'Provides temporary cash assistance to low-income families with children while helping parents find work.',
-    application_url: 'https://www.acf.hhs.gov/ofa/map/about-tanf-map',
+    application_url: 'https://abe.illinois.gov',
     eligibility_rules: {
       must_have_children_under_18: true,
       income_test: { approximate_monthly_by_household: { 1: 700, 2: 950, 3: 1200, 4: 1450, 5: 1700 } },
@@ -116,7 +116,7 @@ export const PROGRAMS = [
     name: 'Unemployment Insurance',
     category: 'financial',
     description_en: 'Temporary weekly payments to workers who lost their job through no fault of their own while they search for new work.',
-    application_url: 'https://www.dol.gov/general/topic/unemployment-insurance',
+    application_url: 'https://ides.illinois.gov/',
     eligibility_rules: {
       employment_status: ['unemployed'],
       states: 'all',
@@ -127,7 +127,7 @@ export const PROGRAMS = [
     name: 'Section 8 / Housing Choice Voucher',
     category: 'housing',
     description_en: 'Subsidizes rent for low-income families, elderly, and disabled. You pay 30% of income; voucher covers the rest.',
-    application_url: 'https://www.hud.gov/topics/housing_choice_voucher_program_section_8',
+    application_url: 'https://ihda.org/residents/rental-housing/',
     eligibility_rules: {
       must_be_renter: true,
       states: 'all',
@@ -138,7 +138,7 @@ export const PROGRAMS = [
     name: 'Emergency Rental Assistance',
     category: 'housing',
     description_en: 'Emergency funds to help renters pay past-due rent and utilities to avoid eviction. Runs at state and local levels.',
-    application_url: 'https://home.treasury.gov/policy-issues/coronavirus/assistance-for-state-local-and-tribal-governments/emergency-rental-assistance-program',
+    application_url: 'https://ihda.org/residents/rental-housing/',
     eligibility_rules: {
       must_be_renter: true,
       financial_hardship_required: true,
@@ -184,7 +184,7 @@ export const PROGRAMS = [
     name: 'School Meals (Free & Reduced Price)',
     category: 'food',
     description_en: 'Free or reduced-price breakfast and lunch for children at participating schools.',
-    application_url: 'https://www.fns.usda.gov/nslp/national-school-lunch-program',
+    application_url: 'https://www.isbe.net/Pages/National-School-Lunch-Program.aspx',
     eligibility_rules: {
       eligible_categories: ['school_age_children'],
       income_test: {

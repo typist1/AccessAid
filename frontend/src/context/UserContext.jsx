@@ -1,11 +1,13 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import supabase from '../lib/supabase'
 import { useAuthContext } from './AuthContext'
+import { useLanguage } from './LanguageContext'
 
 const UserContext = createContext(null)
 
 export function UserProvider({ children }) {
   const { user } = useAuthContext()
+  const { syncFromProfile } = useLanguage()
   const [profile, setProfile] = useState(undefined) // undefined=loading, null=no profile, obj=loaded
   const [facts, setFacts] = useState([])
 
@@ -26,6 +28,7 @@ export function UserProvider({ children }) {
       .eq('user_id', user.id)
       .single()
     setProfile(data ?? null) // null = confirmed no profile exists
+    if (data?.language_preference) syncFromProfile(data.language_preference)
   }
 
   async function fetchFacts() {

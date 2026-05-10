@@ -1,7 +1,9 @@
+import { useTranslation } from 'react-i18next'
 import { useUserContext } from '../../context/UserContext'
 import { useToast } from '../ui/Toast'
 
 export default function FormField({ field, value, onChange }) {
+  const { t } = useTranslation()
   const { upsertFact } = useUserContext()
   const { toast } = useToast()
   const isAutofilled = field._autofilled && value !== ''
@@ -27,10 +29,10 @@ export default function FormField({ field, value, onChange }) {
         {field.required && <span className="text-red-500 ml-1">*</span>}
       </label>
       {isAutofilled && (
-        <span className="text-xs text-blue-600 font-medium">Auto-filled</span>
+        <span className="text-xs text-blue-600 font-medium">{t('common.auto_filled')}</span>
       )}
       {isEmpty && !isAutofilled && (
-        <span className="text-xs text-yellow-600 font-medium">Required</span>
+        <span className="text-xs text-yellow-600 font-medium">{t('common.required')}</span>
       )}
     </div>
   )
@@ -45,7 +47,7 @@ export default function FormField({ field, value, onChange }) {
           onBlur={handleBlur}
           className={`${baseClass} ${bgClass}`}
         >
-          <option value="">— Select —</option>
+          <option value="">{t('common.select_placeholder')}</option>
           {field.options?.map(opt => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}

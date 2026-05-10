@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import supabase from '../../lib/supabase'
 import { useAuthContext } from '../../context/AuthContext'
 import { useUserContext } from '../../context/UserContext'
 import ProgressBar from '../../components/ui/ProgressBar'
+import Language from './steps/Language'
 import FullName from './steps/FullName'
 import Age from './steps/Age'
 import State from './steps/State'
@@ -14,14 +16,16 @@ import Citizenship from './steps/Citizenship'
 import Children from './steps/Children'
 import Disability from './steps/Disability'
 import Student from './steps/Student'
+import Phone from './steps/Phone'
 import Consent from './steps/Consent'
 import animationVideo from '../../assets/animationInspo.mp4'
 
-const STEPS = [FullName, Age, State, Employment, Income, HouseholdSize, Citizenship, Children, Disability, Student, Consent]
+const STEPS = [Language, FullName, Age, State, Employment, Income, HouseholdSize, Citizenship, Children, Disability, Student, Phone, Consent]
 
 export default function Onboarding() {
   const { user } = useAuthContext()
   const { fetchProfile } = useUserContext()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState({})
@@ -55,18 +59,27 @@ export default function Onboarding() {
       children_count: parseInt(data.children_count || 0),
       disability_status: data.disability_status,
       student_status: data.student_status,
+      language_preference: data.language_preference ?? 'en',
     }
 
-    await supabase.from('user_profile').upsert(profileData, { onConflict: 'user_id' })
+    const { error: profileError } = await supabase.from('user_profile').upsert(profileData, { onConflict: 'user_id' })
+    if (profileError) {
+      console.error('Profile upsert failed:', profileError)
+      setSaving(false)
+      return
+    }
 
-    const facts = Object.entries(profileData)
-      .filter(([k]) => k !== 'user_id')
-      .map(([key, value]) => ({
-        user_id: user.id,
-        field_key: key,
-        field_value: String(value),
-        source: 'onboarding',
-      }))
+    const facts = [
+      ...Object.entries(profileData)
+        .filter(([k]) => k !== 'user_id')
+        .map(([key, value]) => ({
+          user_id: user.id,
+          field_key: key,
+          field_value: String(value),
+          source: 'onboarding',
+        })),
+      ...(data.phone ? [{ user_id: user.id, field_key: 'phone', field_value: data.phone, source: 'onboarding' }] : []),
+    ]
 
     await supabase.from('user_facts').upsert(facts, { onConflict: 'user_id,field_key' })
 
@@ -91,7 +104,7 @@ export default function Onboarding() {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold text-purple-700 tracking-tight">AccessAid</span>
-            <p className="text-xs text-purple-400">Step {step + 1} of {total}</p>
+            <p className="text-xs text-purple-400">{t('onboarding.step_indicator', { current: step + 1, total })}</p>
           </div>
           <ProgressBar value={step + 1} max={total} />
         </div>

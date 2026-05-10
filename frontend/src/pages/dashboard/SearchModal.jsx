@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import supabase from '../../lib/supabase'
 import { useAuthContext } from '../../context/AuthContext'
 import Modal from '../../components/ui/Modal'
@@ -9,6 +10,7 @@ import Badge from '../../components/ui/Badge'
 import Spinner from '../../components/ui/Spinner'
 
 export default function SearchModal({ open, onClose, onAdded }) {
+  const { t } = useTranslation()
   const { user } = useAuthContext()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
@@ -19,18 +21,23 @@ export default function SearchModal({ open, onClose, onAdded }) {
   const [newUrl, setNewUrl] = useState('')
 
   useEffect(() => {
-    if (!query.trim()) { setResults([]); return }
-    const timer = setTimeout(() => search(query), 300)
+    if (!open) return
+    const timer = setTimeout(() => search(query), query.trim() ? 300 : 0)
     return () => clearTimeout(timer)
-  }, [query])
+  }, [query, open])
 
   async function search(q) {
     setLoading(true)
-    const { data: programs } = await supabase
+    let req = supabase
       .from('programs')
       .select('id, name, category, description_en')
-      .or(`name.ilike.%${q}%,category.ilike.%${q}%`)
-      .limit(10)
+      .limit(20)
+
+    if (q.trim()) {
+      req = req.or(`name.ilike.%${q}%,category.ilike.%${q}%,description_en.ilike.%${q}%`)
+    }
+
+    const { data: programs } = await req
 
     const found = programs ?? []
 
@@ -76,10 +83,10 @@ export default function SearchModal({ open, onClose, onAdded }) {
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Search Programs">
+    <Modal open={open} onClose={onClose} title={t('search_modal.title')}>
       <div className="flex flex-col gap-4">
         <Input
-          placeholder="Search by name or category..."
+          placeholder={t('search_modal.placeholder')}
           value={query}
           onChange={e => setQuery(e.target.value)}
           autoFocus
@@ -104,6 +111,9 @@ export default function SearchModal({ open, onClose, onAdded }) {
               </div>
             </Link>
           ))}
+          {!loading && results.length === 0 && query.trim() && (
+            <p className="text-sm text-gray-400 text-center py-3">{t('search_modal.no_results', { query })}</p>
+          )}
         </div>
 
         {!showAdd ? (
@@ -111,15 +121,15 @@ export default function SearchModal({ open, onClose, onAdded }) {
             onClick={() => setShowAdd(true)}
             className="text-sm text-blue-600 hover:underline text-left"
           >
-            + Add a program manually
+            {t('search_modal.add_manually_btn')}
           </button>
         ) : (
           <div className="border-t pt-3 flex flex-col gap-3">
-            <p className="text-sm font-medium text-gray-700">Add program manually</p>
-            <Input placeholder="Program name" value={newName} onChange={e => setNewName(e.target.value)} />
-            <Input placeholder="Application URL (optional)" value={newUrl} onChange={e => setNewUrl(e.target.value)} />
+            <p className="text-sm font-medium text-gray-700">{t('search_modal.add_manually_heading')}</p>
+            <Input placeholder={t('search_modal.program_name_placeholder')} value={newName} onChange={e => setNewName(e.target.value)} />
+            <Input placeholder={t('search_modal.program_url_placeholder')} value={newUrl} onChange={e => setNewUrl(e.target.value)} />
             <Button onClick={handleAddManual} disabled={adding || !newName.trim()}>
-              {adding ? 'Adding...' : 'Add Program'}
+              {adding ? t('search_modal.adding') : t('search_modal.add_program_btn')}
             </Button>
           </div>
         )}
