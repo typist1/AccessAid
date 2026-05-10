@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom'
 import AuthGuard from './components/layout/AuthGuard'
 import OnboardingGuard from './components/layout/OnboardingGuard'
+import AuthLayout from './components/layout/AuthLayout'
 import Landing from './pages/Landing'
 import Login from './pages/auth/Login'
 import Signup from './pages/auth/Signup'
@@ -15,8 +16,13 @@ import AutofillProfile from './pages/autofill-profile'
 
 export const router = createBrowserRouter([
   { path: '/', element: <Landing /> },
-  { path: '/login', element: <Login /> },
-  { path: '/signup', element: <Signup /> },
+  {
+    element: <AuthLayout />,
+    children: [
+      { path: '/login', element: <Login /> },
+      { path: '/signup', element: <Signup /> },
+    ],
+  },
   { path: '/auth/callback', element: <AuthCallback /> },
   {
     path: '/onboarding',
