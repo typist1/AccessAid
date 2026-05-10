@@ -19,10 +19,14 @@ export default function Sidebar({ children }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <aside className="w-56 bg-white border-r border-gray-200 flex flex-col py-6 px-4 shrink-0">
+    <div className="flex min-h-screen" style={{ background: '#f9f5ff' }}>
+      <aside
+        className="w-56 flex flex-col py-6 px-4 shrink-0"
+        style={{ background: 'linear-gradient(160deg, #2d1659 0%, #1a0936 100%)' }}
+      >
         <div className="mb-8">
-          <span className="text-base font-semibold text-gray-900 tracking-tight">AccessAid</span>
+          <span className="text-base font-bold text-white tracking-tight">AccessAid</span>
+          <div className="w-6 h-0.5 mt-1 rounded-full" style={{ background: '#d4a843' }} />
         </div>
 
         <nav className="flex flex-col gap-0.5 flex-1">
@@ -31,7 +35,11 @@ export default function Sidebar({ children }) {
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
-                `px-3 py-2 rounded text-sm font-medium transition-colors ${isActive ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`
+                `px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-white/15 text-white'
+                    : 'text-purple-300 hover:text-white hover:bg-white/10'
+                }`
               }
             >
               {item.label}
@@ -42,13 +50,13 @@ export default function Sidebar({ children }) {
         <div className="flex flex-col gap-0.5">
           <button
             onClick={() => setChatOpen(true)}
-            className="text-left px-3 py-2 rounded text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+            className="text-left px-3 py-2 rounded-lg text-sm font-medium text-purple-300 hover:text-white hover:bg-white/10 transition-colors"
           >
             Ask Assistant
           </button>
           <button
             onClick={handleSignOut}
-            className="text-left px-3 py-2 rounded text-sm font-medium text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-colors"
+            className="text-left px-3 py-2 rounded-lg text-sm font-medium text-purple-500/50 hover:text-purple-300 hover:bg-white/10 transition-colors"
           >
             Sign out
           </button>

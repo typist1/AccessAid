@@ -4,7 +4,7 @@ import Spinner from '../../components/ui/Spinner'
 
 function ProgramList({ programs }) {
   return (
-    <div className="grid gap-4">
+    <div className="flex flex-col gap-4">
       {programs.map(up => <ProgramCard key={up.id} userProgram={up} />)}
     </div>
   )
@@ -17,15 +17,15 @@ function MatchSection({ title, description, eyebrow, programs }) {
     <section className="space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{eyebrow}</p>
-          <h3 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">{title}</h3>
-          <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: '#9b6ff0' }}>{eyebrow}</p>
+          <h3 className="mt-1 text-lg font-semibold tracking-tight" style={{ color: '#1e0f3d' }}>{title}</h3>
+          <p className="mt-1 text-sm leading-6" style={{ color: '#7c5bb5' }}>{description}</p>
         </div>
-        <div className="inline-flex w-fit items-center rounded-md border border-stone-200 bg-stone-100 px-3 py-1.5 text-sm font-medium text-slate-700">
+        <div className="inline-flex w-fit items-center rounded-lg px-3 py-1.5 text-sm font-medium"
+          style={{ background: 'rgba(124,58,237,0.08)', color: '#7c3aed' }}>
           {programs.length} program{programs.length === 1 ? '' : 's'}
         </div>
       </div>
-
       <ProgramList programs={programs} />
     </section>
   )
@@ -43,30 +43,37 @@ export default function MatchedPrograms({ programs, loading }) {
   }
 
   if (programs.length === 0) {
-    return <p className="rounded-3xl border border-dashed border-stone-300 bg-stone-50 px-6 py-10 text-sm text-slate-500">Complete your profile to see recommended programs here.</p>
+    return (
+      <p className="rounded-2xl border border-dashed px-6 py-10 text-sm"
+        style={{ borderColor: 'rgba(124,58,237,0.2)', background: 'rgba(124,58,237,0.04)', color: '#9b6ff0' }}>
+        Complete your profile to see recommended programs here.
+      </p>
+    )
   }
 
   return (
     <div className="flex flex-col gap-10">
       <MatchSection
-        title="Start with these"
         eyebrow="Top picks"
-        description="These look like the best use of your time based on the information in your profile."
+        title="Start with these"
+        description="These look like the best use of your time based on your profile."
         programs={strong}
       />
 
       <MatchSection
-        title="Also worth checking"
         eyebrow="Good backups"
-        description="These may still fit, especially if your situation has details the quick screener did not capture."
+        title="Also worth checking"
+        description="May still fit — especially if your situation has details the screener didn't capture."
         programs={possible}
       />
 
       {unlikely.length > 0 && (
-        <div className="rounded-3xl border border-stone-200 bg-stone-50/80 p-5">
+        <div className="rounded-2xl border p-5"
+          style={{ borderColor: 'rgba(124,58,237,0.1)', background: 'rgba(124,58,237,0.03)' }}>
           <button
             onClick={() => setShowUnlikely(v => !v)}
-            className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+            className="text-sm font-medium transition-colors"
+            style={{ color: '#9b6ff0' }}
           >
             {showUnlikely ? 'Hide' : 'Show'} lower-priority options ({unlikely.length})
           </button>
@@ -78,7 +85,9 @@ export default function MatchedPrograms({ programs, loading }) {
         </div>
       )}
 
-      <p className="text-xs text-slate-400">Informational only. Final eligibility is confirmed by the official application.</p>
+      <p className="text-xs" style={{ color: '#b09fd4' }}>
+        Informational only. Final eligibility confirmed by the official application.
+      </p>
     </div>
   )
 }

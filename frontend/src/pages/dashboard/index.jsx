@@ -6,6 +6,9 @@ import MatchedPrograms from './MatchedPrograms'
 import ApplicationTracker from './ApplicationTracker'
 import SearchModal from './SearchModal'
 import ChatWidget from '../../components/chat/ChatWidget'
+import dancingImg from '../../assets/dancing.png'
+import meditationImg from '../../assets/meditation.png'
+import dance2Img from '../../assets/dance2.png'
 
 export default function Dashboard() {
   const { profile } = useUserContext()
@@ -18,68 +21,73 @@ export default function Dashboard() {
 
   return (
     <Sidebar>
-      <div className="mx-auto flex max-w-5xl flex-col gap-10 px-6 py-8 sm:px-8 sm:py-10">
+      <div className="relative min-h-screen overflow-hidden">
+        {/* decorative characters */}
+        <img
+          src={dancingImg}
+          className="absolute bottom-0 right-0 w-44 pointer-events-none select-none opacity-90 z-0"
+          style={{ filter: 'drop-shadow(0 4px 12px rgba(109,40,217,0.15))' }}
+          alt=""
+        />
+        <img
+          src={dance2Img}
+          className="absolute top-6 right-2 w-36 pointer-events-none select-none opacity-75 z-0"
+          style={{ filter: 'drop-shadow(0 4px 12px rgba(109,40,217,0.1))' }}
+          alt=""
+        />
+        <img
+          src={meditationImg}
+          className="absolute bottom-24 right-48 w-28 pointer-events-none select-none opacity-50 z-0"
+          style={{ filter: 'drop-shadow(0 2px 8px rgba(109,40,217,0.1))' }}
+          alt=""
+        />
 
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-            {profile?.full_name ?? 'Dashboard'}
-          </h1>
-          {!loading && programs.length > 0 && (
-            <p className="mt-2 text-sm text-slate-500">
-              {strong} strong match{strong === 1 ? '' : 'es'}, {possible} possible option{possible === 1 ? '' : 's'}
-            </p>
-          )}
-        </div>
+        <div className="max-w-2xl mx-auto px-8 py-10 flex flex-col gap-10 relative z-10">
 
-        <section className="overflow-hidden rounded-[32px] border border-stone-200 bg-gradient-to-br from-white via-stone-50 to-orange-50 shadow-sm">
-          <div className="border-b border-stone-200/80 px-6 py-6 sm:px-8">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-              <div className="max-w-2xl">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Programs</p>
-                <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">Benefits that look worth your time</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Start with the strongest matches first, then review the backup options if you need more support.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                {!loading && (
-                  <>
-                    <div className="rounded-2xl border border-white/70 bg-white/80 px-4 py-3 backdrop-blur">
-                      <div className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Best bets</div>
-                      <div className="mt-1 text-2xl font-semibold text-slate-900">{strong}</div>
-                    </div>
-                    <div className="rounded-2xl border border-white/70 bg-white/80 px-4 py-3 backdrop-blur">
-                      <div className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Worth checking</div>
-                      <div className="mt-1 text-2xl font-semibold text-slate-900">{possible}</div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
+          <div>
+            <h1 className="text-2xl font-bold" style={{ color: '#1e0f3d' }}>
+              {profile?.full_name ? `Hi, ${profile.full_name.split(' ')[0]} ✨` : 'Dashboard'}
+            </h1>
+            {!loading && programs.length > 0 && (
+              <p className="text-sm mt-1" style={{ color: '#7c5bb5' }}>
+                {strong > 0 && <><span className="font-semibold text-emerald-600">{strong} strong</span>{possible > 0 ? ', ' : ''}</>}
+                {possible > 0 && <span className="font-semibold text-amber-600">{possible} possible</span>}
+                {' '}match{strong + possible !== 1 ? 'es' : ''} found
+              </p>
+            )}
           </div>
 
-          <div className="px-6 py-5 sm:px-8">
-            <div className="mb-6 flex flex-wrap gap-3">
-              <button
-                onClick={() => setSearchOpen(true)}
-                className="inline-flex items-center rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-stone-400 hover:bg-stone-50"
-              >
-                Search programs
-              </button>
-              <button
-                onClick={() => setChatOpen(true)}
-                className="inline-flex items-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-              >
-                Ask assistant
-              </button>
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold uppercase tracking-wider" style={{ color: '#7c5bb5' }}>
+                Programs
+              </h2>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setSearchOpen(true)}
+                  className="text-xs font-medium transition-colors"
+                  style={{ color: '#9b6ff0' }}
+                  onMouseEnter={e => e.target.style.color = '#1e0f3d'}
+                  onMouseLeave={e => e.target.style.color = '#9b6ff0'}
+                >
+                  Search programs
+                </button>
+                <button
+                  onClick={() => setChatOpen(true)}
+                  className="text-xs font-medium transition-colors"
+                  style={{ color: '#9b6ff0' }}
+                  onMouseEnter={e => e.target.style.color = '#1e0f3d'}
+                  onMouseLeave={e => e.target.style.color = '#9b6ff0'}
+                >
+                  Ask Assistant
+                </button>
+              </div>
             </div>
-
             <MatchedPrograms programs={programs} loading={loading} />
           </div>
-        </section>
 
-        <ApplicationTracker programs={programs} />
+          <ApplicationTracker programs={programs} />
+        </div>
       </div>
 
       <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} onAdded={refetch} />

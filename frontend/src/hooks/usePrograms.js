@@ -13,6 +13,7 @@ export function usePrograms() {
   const [programs, setPrograms] = useState([])
   const [loading, setLoading] = useState(true)
 
+  
   useEffect(() => {
     if (!user || !profile) return
     scorePrograms()
