@@ -7,6 +7,16 @@
   "host_permissions": [
     "https://abe.illinois.gov/*",
     "https://*.healthcare.gov/*",
+    "https://studentaid.gov/*",
+    "https://*.ssa.gov/*",
+    "https://secure.login.gov/*",
+    "https://www.lifelinesupport.org/*",
+    "https://ides.illinois.gov/*",
+    "https://www.insurekidsnow.gov/*",
+    "https://idph.illinois.gov/*",
+    "https://liheap.illinois.gov/*",
+    "https://ihda.org/*",
+    "https://www.isbe.net/*",
     "https://prixypextuugdasthneh.supabase.co/*",
     "http://localhost:3001/*"
   ],
@@ -20,7 +30,17 @@
     {
       "matches": [
         "https://abe.illinois.gov/*",
-        "https://*.healthcare.gov/*"
+        "https://*.healthcare.gov/*",
+        "https://studentaid.gov/*",
+        "https://*.ssa.gov/*",
+        "https://secure.login.gov/*",
+        "https://www.lifelinesupport.org/*",
+        "https://ides.illinois.gov/*",
+        "https://www.insurekidsnow.gov/*",
+        "https://idph.illinois.gov/*",
+        "https://liheap.illinois.gov/*",
+        "https://ihda.org/*",
+        "https://www.isbe.net/*"
       ],
       "js": ["content.js"],
       "run_at": "document_idle"

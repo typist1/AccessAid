@@ -4,6 +4,7 @@
 const BACKEND_URL = 'http://localhost:3001'
 
 let banner = null
+let dismissed = false
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
@@ -21,7 +22,22 @@ function getPortalId() {
   const host = window.location.hostname
   if (host.includes('abe.illinois.gov')) return 'abe_il'
   if (host.includes('healthcare.gov')) return 'healthcare_gov'
+  if (host.includes('studentaid.gov')) return 'studentaid_gov'
+  if (host.includes('ssa.gov')) return 'ssa_gov'
+  if (host.includes('login.gov')) return 'login_gov'
+  if (host.includes('lifelinesupport.org')) return 'lifeline'
+  if (host.includes('ides.illinois.gov')) return 'ides_il'
+  if (host.includes('insurekidsnow.gov')) return 'insurekidsnow'
+  if (host.includes('idph.illinois.gov')) return 'idph_il'
+  if (host.includes('liheap.illinois.gov')) return 'liheap_il'
+  if (host.includes('ihda.org')) return 'ihda_il'
+  if (host.includes('isbe.net')) return 'isbe_il'
   return null
+}
+
+function isRegistrationPage() {
+  return /create[-_.]?account|sign[-_.]?up|register|new[-_.]?user|fsa[-_.]?id|my[-_.]?account\/create/i
+    .test(document.title + ' ' + window.location.href)
 }
 
 // ─── Field detection ────────────────────────────────────────────────────────
@@ -33,6 +49,7 @@ function detectFields() {
   document.querySelectorAll('input, select, textarea').forEach(el => {
     const type = el.type?.toLowerCase()
     if (type === 'hidden' || type === 'submit' || type === 'button' || type === 'image') return
+    if (type === 'password') return
     if (el.disabled || el.readOnly) return
 
     let label = ''
@@ -95,8 +112,9 @@ function detectFields() {
 
 // ─── Banner UI ───────────────────────────────────────────────────────────────
 
-function removeBanner() {
+function removeBanner(userDismissed = false) {
   if (banner) { banner.remove(); banner = null }
+  if (userDismissed) dismissed = true
 }
 
 const BANNER_STYLE = `
@@ -108,7 +126,7 @@ const BANNER_STYLE = `
   border: 1px solid rgba(0,0,0,0.08);
 `
 
-function showAutofillBanner(fieldCount, onFill) {
+function showAutofillBanner(fieldCount, onFill, prompt) {
   removeBanner()
   banner = document.createElement('div')
   banner.id = 'aa-banner'
@@ -119,9 +137,7 @@ function showAutofillBanner(fieldCount, onFill) {
       <span style="font-weight:700;font-size:13px;">AccessAid</span>
       <button id="aa-close" title="Dismiss" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#9ca3af;font-size:17px;line-height:1;padding:0;">×</button>
     </div>
-    <p style="margin:0 0 12px;color:#374151;">
-      Autofill <strong>${fieldCount} field${fieldCount !== 1 ? 's' : ''}</strong> from your profile?
-    </p>
+    <p style="margin:0 0 12px;color:#374151;">${prompt ?? `Autofill <strong>${fieldCount} field${fieldCount !== 1 ? 's' : ''}</strong> from your profile?`}</p>
     <div style="display:flex;gap:8px;">
       <button id="aa-fill" style="
         flex:1;background:#2563eb;color:#fff;border:none;border-radius:8px;
@@ -136,8 +152,8 @@ function showAutofillBanner(fieldCount, onFill) {
   `
   document.body.appendChild(banner)
   document.getElementById('aa-fill').addEventListener('click', onFill)
-  document.getElementById('aa-dismiss').addEventListener('click', removeBanner)
-  document.getElementById('aa-close').addEventListener('click', removeBanner)
+  document.getElementById('aa-dismiss').addEventListener('click', () => removeBanner(true))
+  document.getElementById('aa-close').addEventListener('click', () => removeBanner(true))
 }
 
 function showLoginBanner() {
@@ -160,7 +176,7 @@ function showLoginBanner() {
     ">Open AccessAid</button>
   `
   document.body.appendChild(banner)
-  document.getElementById('aa-close').addEventListener('click', removeBanner)
+  document.getElementById('aa-close').addEventListener('click', () => removeBanner(true))
   document.getElementById('aa-open').addEventListener('click', () => {
     chrome.runtime.sendMessage({ type: 'OPEN_DASHBOARD' })
   })
@@ -277,6 +293,9 @@ async function reportSubmit(token, portalId) {
 // ─── Init ────────────────────────────────────────────────────────────────────
 
 async function init() {
+  if (dismissed) return
+  if (banner) return
+
   const token = await getAccessToken()
 
   if (!token) {
@@ -287,18 +306,27 @@ async function init() {
   const fields = detectFields()
   if (!fields.length) return
 
-  showAutofillBanner(fields.length, () => runAutofill(fields, token))
+  const label = isRegistrationPage()
+    ? `Pre-fill ${fields.length} field${fields.length !== 1 ? 's' : ''} to create your account?`
+    : `Autofill ${fields.length} field${fields.length !== 1 ? 's' : ''} from your profile?`
+  showAutofillBanner(fields.length, () => runAutofill(fields, token), label)
 }
 
 // Run on page load
 init()
 
-// Re-run on SPA navigation (healthcare.gov is a multi-step SPA)
+// Retry for pages where forms load dynamically after document_idle
+setTimeout(init, 1500)
+setTimeout(init, 3500)
+
+// Re-run on SPA navigation — reset dismissed state on each new page
 let lastUrl = location.href
 const navObserver = new MutationObserver(() => {
   if (location.href !== lastUrl) {
     lastUrl = location.href
+    dismissed = false
     setTimeout(() => { removeBanner(); init() }, 700)
+    setTimeout(init, 1500)
   }
 })
 navObserver.observe(document.documentElement, { childList: true, subtree: true })
